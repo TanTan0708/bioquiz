@@ -38,18 +38,30 @@ Rules:
         model: 'baidu/ernie-5.5-flash-preview:free',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 8192, // INCREASED to prevent truncation
+        max_tokens: 8192,
         response_format: { type: 'json_object' }
       })
     });
 
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(`OpenRouter ${response.status}: ${err}`);
+      throw new Error(`OpenRouter API Error ${response.status}: ${err}`);
     }
 
     const data = await response.json();
+    
+    // Check if choices and message exist
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error("Invalid response structure from OpenRouter.");
+    }
+
     const raw = data.choices[0].message.content;
+    
+    // THE FIX: Check if raw is null before calling .replace()
+    if (!raw) {
+      throw new Error("The AI model returned an empty response. Please try again.");
+    }
+
     const clean = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
     const questions = parsed.questions || parsed;

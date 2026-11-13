@@ -88,6 +88,14 @@
   .option.wrong .letter{background:var(--no);color:#450a0a}
   .option:disabled{cursor:default}
 
+  .idbox{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .idbox input{flex:1;min-width:200px;font-family:inherit;font-size:.95rem;color:var(--txt);
+    background:rgba(15,23,42,.8);border:1px solid var(--line);
+    border-radius:12px;padding:13px 16px;outline:none;transition:.16s;}
+  .idbox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+  .idbox input:disabled{opacity:.7}
+  .idbox .btn{padding:13px 20px;color:#04121e;background:linear-gradient(90deg,var(--accent),var(--accent2));border:none}
+
   .feedback{margin-top:20px;border-radius:14px;padding:16px 18px;font-size:.9rem;
     border:1px solid var(--line);background:rgba(15,23,42,.6);animation:fade .25s ease}
   .feedback.good{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.1)}
@@ -193,10 +201,11 @@
       </div>
       <div class="progress"><div class="bar" id="bar"></div></div>
 
-      <div class="qtype">Multiple Choice</div>
+      <div class="qtype" id="qType">Multiple Choice</div>
       <div class="qtext" id="qText"></div>
 
       <div class="options" id="optionsBox"></div>
+      <div id="idBoxContainer"></div>
       <div id="feedback"></div>
 
       <div class="actions">
@@ -289,7 +298,7 @@ const QUESTIONS = [
 {topic:'mut',type:'mc',q:'Substitution of adenine (A) by guanine (G), or of thymine (T) by cytosine (C), is called a…',options:['Transversion','Transition','Frameshift','Deletion'],answer:1,explain:'Transitions substitute a purine for a purine or a pyrimidine for a pyrimidine.'},
 {topic:'mut',type:'mc',q:'A base substitution that changes an amino-acid codon into a STOP codon is a…',options:['Same-sense (silent) mutation','Missense mutation','Nonsense mutation','Frameshift mutation'],answer:2,explain:'Nonsense mutations create a premature stop codon.'},
 {topic:'mut',type:'mc',q:'Insertion or deletion of one or two nucleotides in a gene typically causes a…',options:['Same-sense mutation','Frameshift mutation','Transition','Silent mutation'],answer:1,explain:'Adding or removing 1 or 2 nucleotides shifts the reading frame.'},
-{topic:'mut',type:'easy',q:'Which scientist discovered transposons ("jumping genes") in maize and won the 1983 Nobel Prize?',options:['Barbara McClintock','Rosalind Franklin','Gregor Mendel','Thomas Hunt Morgan'],answer:0,explain:'Barbara McClintock discovered the Ac-Ds transposon system.'},
+{topic:'mut',type:'mc',q:'Which scientist discovered transposons ("jumping genes") in maize and won the 1983 Nobel Prize?',options:['Barbara McClintock','Rosalind Franklin','Gregor Mendel','Thomas Hunt Morgan'],answer:0,explain:'Barbara McClintock discovered the Ac-Ds transposon system.'},
 {topic:'mut',type:'mc',q:'Colchicine is a chemical mutagen that causes chromosomal mutations by…',options:['Breaking both DNA strands','Inhibiting spindle formation and preventing anaphase','Adding methyl groups to cytosine','Producing thymine dimers'],answer:1,explain:'Colchicine inhibits spindle formation and prevents anaphase.'},
 {topic:'mut',type:'mc',q:'What happens when the mutation rate is TOO HIGH in a population?',options:['The population evolves much faster and benefits','The population is overwhelmed by the deleterious effects of mutation','Nothing changes at all','Mutation rates have no relationship to evolution'],answer:1,explain:'Too high a rate overwhelms the population with deleterious mutations.'},
 {topic:'mut',type:'id',q:'What is the name of the maize transposon system (two-part: an activator and a dissociation element) discovered by McClintock?',answers:['ac ds','acds','activator dissociation','ac ds system','activator dissociation system'],explain:'The Ac-Ds (Activator–Dissociation) system.'},
@@ -305,7 +314,7 @@ const QUESTIONS = [
 {topic:'cyt',type:'mc',q:'The "grandchildless" mutation in Drosophila shows that…',options:['Offspring of a fertile homozygous female are all fully sterile, regardless of the male\'s genotype','All offspring die as embryos','Only males are affected','The mutation follows simple Mendelian inheritance'],answer:0,explain:'The gene is transmitted through the egg cytoplasm and prevents normal reproductive development.'},
 {topic:'cyt',type:'mc',q:'Sager et al. (1960) studied streptomycin resistance in which organism, showing a non-Mendelian pattern?',options:['Chlamydomonas','Paramecium','Neurospora','Drosophila'],answer:0,explain:'In the single-celled green alga Chlamydomonas, inheritance of resistance is non-Mendelian.'},
 {topic:'cyt',type:'mc',q:'Sonneborn (1943) studied the "killer" trait in Paramecium aurelia. A killer must have…',options:['Only the K gene','The K gene AND cytoplasmic particles called kappa','Only kappa particles','A chloroplast genome'],answer:1,explain:'The killer needs both the nuclear gene K and the cytoplasmic kappa particles.'},
-{topic:'cyt',type:'easy',q:'Which scientist (1909) discovered the non-Mendelian, maternal inheritance of leaf pigmentation in the four o\'clock plant, Mirabilis jalapa?',options:['Correns','Mendel','Sutton','Boveri'],answer:0,explain:'Correns showed that pigmentation in Mirabilis jalapa is inherited only through the female parent.'},
+{topic:'cyt',type:'mc',q:'Which scientist (1909) discovered the non-Mendelian, maternal inheritance of leaf pigmentation in the four o\'clock plant, Mirabilis jalapa?',options:['Correns','Mendel','Sutton','Boveri'],answer:0,explain:'Correns showed that pigmentation in Mirabilis jalapa is inherited only through the female parent.'},
 {topic:'cyt',type:'mc',q:'A plant cell that contains BOTH normal (green) and mutant (white) chloroplasts is said to show…',options:['Heteroplasmy','Aneuploidy','Epistasis','Pleiotropy'],answer:0,explain:'Heteroplasmy is the presence of more than one type of organelle genome in a cell.'},
 {topic:'cyt',type:'mc',q:'In yeast, which petite mutant totally lacks the mitochondrial genome (rho⁰)?',options:['Segregational (nuclear) petite','Neutral petite','Suppressive petite','Wild-type'],answer:1,explain:'Neutral petites (rho⁰) completely lack the mitochondrial genome.'},
 {topic:'cyt',type:'mc',q:'The human mitochondrial genome contains…',options:['37 genes, 13 of which encode proteins','13 genes, all encoding proteins','About 20,000 genes','No genes — only ribosomes'],answer:0,explain:'Human mtDNA has 37 genes, 13 of which encode proteins.'},
@@ -476,19 +485,20 @@ function renderQuestion(){
   $('counter').textContent = `Question ${state.i + 1} of ${state.pool.length}`;
   $('bar').style.width = ((state.i) / state.pool.length * 100) + '%';
   
+  $('qType').textContent = q.type === 'mc' ? 'Multiple Choice' : 'Identification';
   $('qText').textContent = q.q;
   $('feedback').innerHTML = '';
   $('nextBtn').style.display = 'none';
 
   const optBox = $('optionsBox');
-  const idBox = $('idBox');
-  optBox.innerHTML = '';
-
+  const idBoxContainer = $('idBoxContainer');
+  
   if (q.type === 'mc') {
     optBox.style.display = 'grid';
-    if(idBox) idBox.style.display = 'none';
+    idBoxContainer.innerHTML = '';
     
     const letters = ['A','B','C','D'];
+    optBox.innerHTML = '';
     q.options.forEach((opt, idx) => {
       const btn = document.createElement('button');
       btn.className = 'option';
@@ -499,18 +509,15 @@ function renderQuestion(){
   } else {
     // Identification (only exists in hard-coded pool)
     optBox.style.display = 'none';
-    if (!idBox) {
-      // Create ID box if it doesn't exist (just in case)
-      const newIdBox = document.createElement('div');
-      newIdBox.id = 'idBox';
-      newIdBox.className = 'idbox';
-      newIdBox.innerHTML = `<input id="idInput" type="text" placeholder="Type your answer…" autocomplete="off"><button id="submitId" class="btn">Submit</button>`;
-      $('qText').after(newIdBox);
-    }
-    $('idBox').style.display = 'flex';
+    idBoxContainer.innerHTML = `
+      <div class="idbox">
+        <input id="idInput" type="text" placeholder="Type your answer…" autocomplete="off">
+        <button id="submitId" class="btn">Submit</button>
+      </div>
+      <div style="font-size:.76rem;color:var(--muted);margin-top:8px">Spelling doesn't have to be perfect — just get the key term right.</div>
+    `;
+    
     const input = $('idInput');
-    input.value = '';
-    input.disabled = false;
     input.focus();
     $('submitId').onclick = answerID;
     input.onkeydown = (e) => { if(e.key === 'Enter'){ e.preventDefault(); answerID(); } };
