@@ -13,17 +13,17 @@ export default async function handler(req, res) {
     cyt: 'cytoplasmic inheritance — maternal effects, extrachromosomal inheritance, organelles (lecture 14)'
   };
 
-  const prompt = `You are a genetics professor. Generate ${count} multiple-choice questions about ${topicLabels[topic] || topicLabels.all}.
+  const prompt = `You are a genetics professor. Generate EXACTLY ${count} multiple-choice questions about ${topicLabels[topic] || topicLabels.all}.
 Difficulty: ${difficulty}.
 
-Return ONLY valid JSON matching this exact shape:
+Return ONLY a valid JSON object. Do not include markdown formatting or backticks.
+Schema:
 {"questions":[{"question":"...","options":["A","B","C","D"],"answer":0,"explanation":"..."}]}
 
 Rules:
 - "answer" is the index (0-3) of the correct option.
 - 4 options per question.
-- Every question must have a short explanation.
-- No markdown, no extra text.`;
+- Every question must have a short explanation.`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -38,7 +38,7 @@ Rules:
         model: 'baidu/ernie-5.5-flash-preview:free',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
-        max_tokens: 4000,
+        max_tokens: 8192, // INCREASED to prevent truncation
         response_format: { type: 'json_object' }
       })
     });

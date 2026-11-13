@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Genetics Quiz · Gene Regulation, Mutations & Cytoplasmic Inheritance</title>
+<title>Genetics Quiz</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -44,12 +44,12 @@
   .topic .meta{flex:1}
   .topic .name{font-weight:600;font-size:.98rem}
   .topic .desc{font-size:.78rem;color:var(--muted)}
+  .topic .count{font-size:.75rem;color:var(--accent);font-weight:700;white-space:nowrap}
 
   .qcount{margin:20px 0 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .qcount label{font-size:.9rem;color:var(--muted);white-space:nowrap}
   .qcount input[type=range]{flex:1;min-width:150px;accent-color:var(--accent);cursor:pointer}
   .qcount .val{font-weight:700;color:var(--accent);min-width:44px;text-align:center}
-  .qcount .max{font-size:.75rem;color:var(--muted);white-space:nowrap}
 
   .btn{font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;
        border-radius:12px;padding:13px 22px;border:1px solid transparent;transition:.18s}
@@ -165,21 +165,21 @@
     <div class="card">
       <div class="logo">🧬</div>
       <h1>Genetics Quiz</h1>
-      <p class="sub">Lectures 12 – 14 · AI-generated questions</p>
+      <p class="sub">Lectures 12 – 14 · Hybrid Quiz System</p>
       <p class="instructions">
-        Pick a topic, choose how many questions, and start.<br>
-        Every question comes with an explanation.
+        Pick a topic and choose how many questions.<br>
+        If you request more than the built-in bank, AI will generate the extras.
       </p>
       <div id="topicList" class="topic-list"></div>
 
       <div class="qcount">
         <label for="numQuestions">Number of questions:</label>
-        <input type="range" id="numQuestions" min="5" max="50" value="15" step="1">
-        <span class="val" id="numQuestionsVal">15</span>
+        <input type="range" id="numQuestions" min="5" max="100" value="20" step="1">
+        <span class="val" id="numQuestionsVal">20</span>
       </div>
 
       <button id="startBtn" class="btn primary">Start Quiz →</button>
-      <div id="startLoading" class="loading-box">Generating questions… (this can take 10–30 seconds)</div>
+      <div id="startLoading" class="loading-box">Generating extra questions… (this can take 10–30 seconds)</div>
     </div>
   </section>
 
@@ -188,7 +188,7 @@
     <div class="card">
       <div class="qhead">
         <span id="topicBadge" class="badge">Topic</span>
-        <span id="counter">Question 1 of 15</span>
+        <span id="counter">Question 1 of 20</span>
         <span class="scorepill">Score: <span id="scoreVal">0</span></span>
       </div>
       <div class="progress"><div class="bar" id="bar"></div></div>
@@ -226,7 +226,7 @@
         <h3>Try again? 🎯</h3>
         <div class="retry-row">
           <label for="retryCount">How many questions?</label>
-          <input type="number" id="retryCount" min="1" max="50" value="15">
+          <input type="number" id="retryCount" min="1" max="100" value="20">
         </div>
         <div class="retry-strats">
           <label><input type="radio" name="strategy" value="same" checked> Same difficulty</label>
@@ -238,7 +238,7 @@
           <button id="retryStartBtn" class="btn primary">Start Retry</button>
           <button id="homeBtn" class="btn ghost">Change Topic</button>
         </div>
-        <div id="retryLoading" class="loading-box">Generating new questions…</div>
+        <div id="retryLoading" class="loading-box">Generating extra questions…</div>
       </div>
     </div>
   </section>
@@ -246,21 +246,89 @@
 </div>
 
 <script>
+/* =========================================================
+   HARD-CODED QUESTIONS (59 Total)
+   ========================================================= */
+const QUESTIONS = [
+/* ---------------- GENE REGULATION (21) ---------------- */
+{topic:'reg',type:'mc',q:'Why is the genetic code a triplet (three-letter) code?',options:['Because DNA has three strands','Because 4³ = 64 codons is more than enough to specify the 20 amino acids','Because there are exactly 20 tRNA molecules','Because each amino acid contains three nucleotides'],answer:1,explain:'One nucleotide gives only 4 possibilities and two give 16 — not enough for 20 amino acids. Three nucleotides give 64 codons, which works.'},
+{topic:'reg',type:'mc',q:'Who used synthetic poly-U RNA in an E. coli translational system to produce poly-phenylalanine, cracking the first codon?',options:['James Watson and Francis Crick','Marshall Nirenberg and J. Heinrich Matthaei','Har Gobind Khorana','François Jacob and Jacques Monod'],answer:1,explain:'Nirenberg and Matthaei (1961) used poly-U RNA and got poly-phenylalanine (poly-Phe).'},
+{topic:'reg',type:'mc',q:'What did Har Gobind Khorana prove about the genetic code?',options:['That the code is read in groups of three (codons) and that some codons signal start or stop','That the code is overlapping and comma-free','That RNA is the genetic material of viruses','That codons are made of four nucleotides'],answer:0,explain:'Khorana showed the nucleotide code is always transmitted in groups of 3 called codons.'},
+{topic:'reg',type:'mc',q:'The code is described as "non-overlapping." What does that mean?',options:['mRNA is read three bases at a time without skipping any bases','Each nucleotide belongs to only one codon and is read only once','Codons can be read in either direction','Several codons can code for the same amino acid'],answer:1,explain:'Non-overlapping (non-ambiguous) means each nucleotide is part of only one codon.'},
+{topic:'reg',type:'id',q:'Which hypothesis, proposed by Crick in 1961, explains the degeneracy of the code by stating that the first two positions pair precisely but the third position may pair loosely?',answers:['wobble hypothesis','wobble','the wobble hypothesis'],explain:'The Wobble Hypothesis explains why one tRNA can recognize more than one codon.'},
+{topic:'reg',type:'mc',q:'Which of the following is an exception to the universality of the genetic code, found in mitochondria?',options:['UAA codes for tryptophan','UGA codes for tryptophan and AUA codes for methionine','AUG codes for valine','There are no exceptions — the code is 100% universal'],answer:1,explain:'Exceptions occur in mitochondria, where UGA = UGG (tryptophan) and AUA = AUG (methionine).'},
+{topic:'reg',type:'mc',q:'Which of the following is NOT a stop (chain-termination) codon?',options:['UAA','UAG','UGA','AUG'],answer:3,explain:'AUG is the START codon. The three stop signals are UAA, UAG and UGA.'},
+{topic:'reg',type:'mc',q:'Who coined the term "operon" and won the 1965 Nobel Prize for it?',options:['François Jacob and Jacques Monod','Watson and Crick','Fire and Mello','Beadle and Tatum'],answer:0,explain:'François Jacob and Jacques Monod coined "operon."'},
+{topic:'reg',type:'mc',q:'In the lac operon, which molecule acts as the inducer that turns the gene ON?',options:['Glucose','Allolactose','Tryptophan','Lactose permease'],answer:1,explain:'Allolactose binds the repressor and changes its conformation, turning the operon ON.'},
+{topic:'reg',type:'mc',q:'The trp operon is best described as…',options:['An inducible operon under positive control','A repressible operon that is normally ON until tryptophan activates the repressor','A constitutive operon expressed all the time','An operon found only in eukaryotes'],answer:1,explain:'The trp operon is repressible and under negative control.'},
+{topic:'reg',type:'mc',q:'Which operon is the lecture\'s example of POSITIVE control?',options:['Lac operon','Trp operon','Arabinose (ara) operon','Sigma operon'],answer:2,explain:'The arabinose (ara) operon is an example of positive control.'},
+{topic:'reg',type:'mc',q:'According to the Davidson–Britten model (1979) of eukaryotic gene regulation, which two elements are involved?',options:['Operator and repressor','Sensor and integrator genes','Promoter and terminator','Kappa particles and plasmids'],answer:1,explain:'Sensors and integrator genes are involved in this model.'},
+{topic:'reg',type:'mc',q:'Which of the following is a PRE-transcriptional control mechanism?',options:['Alternative splicing of the primary transcript','DNA methylation, chromatin structure and gene amplification','Phosphorylation of a finished protein','Length of the poly-A tail'],answer:1,explain:'DNA methylation, chromatin structure, and gene amplification are pre-transcriptional.'},
+{topic:'reg',type:'mc',q:'Making different mRNAs from the same primary transcript by using different exons is called…',options:['Gene amplification','Alternative splicing','Wobbling','Translocation'],answer:1,explain:'Alternative splicing lets one gene produce several different proteins.'},
+{topic:'reg',type:'mc',q:'At the translational level, what is the effect of a longer poly-A tail?',options:['The mRNA is degraded faster','The mRNA can exist (and be translated) for a longer time','It changes the reading frame','It converts the mRNA into a polycistronic message'],answer:1,explain:'The longer the poly-A tail, the longer the mRNA survives.'},
+{topic:'reg',type:'mc',q:'Bovine proinsulin being cleaved into two polypeptide chains with ~30 amino acids removed to form insulin is an example of…',options:['Pre-transcriptional control','Transcriptional control','Translational control','Post-translational control'],answer:3,explain:'Post-translational control: proteins are modified after translation.'},
+{topic:'reg',type:'id',q:'What do we call the study of mechanisms that change gene expression by modifying DNA WITHOUT altering its base sequence?',answers:['epigenetics','epigenetic'],explain:'Epigenetics studies heritable changes in gene expression without changing the DNA sequence.'},
+{topic:'reg',type:'mc',q:'Which histone modification loosens/unravels DNA and makes genes more available for activation?',options:['Histone methylation','Histone acetylation','DNA methylation','Gene amplification'],answer:1,explain:'Histone acetylation unravels the DNA, making genes more available for activation.'},
+{topic:'reg',type:'mc',q:'Fire and Mello (Nobel Prize 2006) discovered…',options:['The operon','RNA interference (RNAi)','Transposons','The wobble hypothesis'],answer:1,explain:'They discovered RNA interference (RNAi).'},
+{topic:'reg',type:'id',q:'What term describes a gene that is expressed all the time (as opposed to an inducible gene)?',answers:['constitutive','constitutive gene','constitutive genes'],explain:'Constitutive genes are expressed all the time.'},
+{topic:'reg',type:'mc',q:'Two lab mice are genetically identical but one has a brown coat and the other yellow (agouti). The difference is best explained by…',options:['Different alleles of the agouti gene','DNA methylation silencing the agouti gene in one mouse','A translocation between chromosomes','Different numbers of chromosomes'],answer:1,explain:'DNA methylation silencing the agouti gene causes this epigenetic effect.'},
+
+/* ---------------- MUTATIONS (21) ---------------- */
+{topic:'mut',type:'mc',q:'Mutations are best defined as changes in the genetic material that are…',options:['Temporary and reversible','Heritable and essentially permanent','Always lethal to the cell','Limited to somatic cells'],answer:1,explain:'Mutations are heritable and essentially permanent.'},
+{topic:'mut',type:'mc',q:'Organisms having three or more sets of the genome are called…',options:['Aneuploids','Polyploids','Monoploids','Monosomics'],answer:1,explain:'Polyploids have 3 or more sets of chromosomes.'},
+{topic:'mut',type:'mc',q:'Seedless watermelon is typically produced by crossing a…',options:['2n plant with a 2n plant','4n plant with a 2n plant','3n plant with a 3n plant','2n plant with a 1n plant'],answer:1,explain:'Triploids (3x) arise from a cross between a tetraploid (4n) and a diploid (2n).'},
+{topic:'mut',type:'mc',q:'Tobacco (Nicotiana tabacum, 2n = 4x = 48), formed from N. sylvestris × N. tomentosiformis, is an example of a(n)…',options:['Autotetraploid','Allotetraploid','Allohexaploid','Monosomic'],answer:1,explain:'An allotetraploid has chromosome sets from two or more different species.'},
+{topic:'mut',type:'mc',q:'Bread wheat (Triticum aestivum, 2n = 6x = 42) is a classic example of a(n)…',options:['Autotriploid','Allotetraploid','Allohexaploid','Nullisomic'],answer:2,explain:'Bread wheat is an allohexaploid formed through successive hybridization.'},
+{topic:'mut',type:'id',q:'What kind of polyploid is composed of chromosome sets originating from two or more DIFFERENT species?',answers:['allopolyploid','allopolyploids','allopolyploidy'],explain:'Allopolyploids combine sets from different species.'},
+{topic:'mut',type:'mc',q:'Which of the following is an AUTOPOLYPLOID?',options:['Bread wheat','Cultivated potato (4x)','Tobacco','Raphanobrassica'],answer:1,explain:'Cultivated potato is an autotetraploid.'},
+{topic:'mut',type:'mc',q:'An individual with a chromosome number of 2n + 1 is called…',options:['Monosomic','Nullisomic','Trisomic','Tetrasomic'],answer:2,explain:'Trisomic = 2n+1.'},
+{topic:'mut',type:'mc',q:'Nondisjunction during meiosis produces gametes that are…',options:['Always diploid','n+1 and n−1','Always n','2n and 4n'],answer:1,explain:'Gametes end up with one extra (n+1) or one fewer (n−1) chromosome.'},
+{topic:'mut',type:'mc',q:'Cri-du-chat syndrome, which causes mental retardation, is caused by…',options:['A terminal deletion of the short arm of one chromosome 5','A trisomy of chromosome 21','A pericentric inversion of chromosome 9','A Robertsonian translocation'],answer:0,explain:'Cri-du-chat results from a terminal deletion on chromosome 5.'},
+{topic:'mut',type:'mc',q:'An inversion that INCLUDES the centromere is called…',options:['Paracentric','Pericentric','Reciprocal','Terminal'],answer:1,explain:'Pericentric inversions include the centromere.'},
+{topic:'mut',type:'mc',q:'Translocation Down syndrome accounts for about 5% of all cases. Which mechanism causes it?',options:['Nondisjunction in meiosis I','A Robertsonian translocation, typically between chromosomes 14 and 21','A deletion on chromosome 21','A pericentric inversion of chromosome 21'],answer:1,explain:'A Robertsonian translocation can lead to trisomy 21.'},
+{topic:'mut',type:'mc',q:'Substitution of adenine (A) by guanine (G), or of thymine (T) by cytosine (C), is called a…',options:['Transversion','Transition','Frameshift','Deletion'],answer:1,explain:'Transitions substitute a purine for a purine or a pyrimidine for a pyrimidine.'},
+{topic:'mut',type:'mc',q:'A base substitution that changes an amino-acid codon into a STOP codon is a…',options:['Same-sense (silent) mutation','Missense mutation','Nonsense mutation','Frameshift mutation'],answer:2,explain:'Nonsense mutations create a premature stop codon.'},
+{topic:'mut',type:'mc',q:'Insertion or deletion of one or two nucleotides in a gene typically causes a…',options:['Same-sense mutation','Frameshift mutation','Transition','Silent mutation'],answer:1,explain:'Adding or removing 1 or 2 nucleotides shifts the reading frame.'},
+{topic:'mut',type:'easy',q:'Which scientist discovered transposons ("jumping genes") in maize and won the 1983 Nobel Prize?',options:['Barbara McClintock','Rosalind Franklin','Gregor Mendel','Thomas Hunt Morgan'],answer:0,explain:'Barbara McClintock discovered the Ac-Ds transposon system.'},
+{topic:'mut',type:'mc',q:'Colchicine is a chemical mutagen that causes chromosomal mutations by…',options:['Breaking both DNA strands','Inhibiting spindle formation and preventing anaphase','Adding methyl groups to cytosine','Producing thymine dimers'],answer:1,explain:'Colchicine inhibits spindle formation and prevents anaphase.'},
+{topic:'mut',type:'mc',q:'What happens when the mutation rate is TOO HIGH in a population?',options:['The population evolves much faster and benefits','The population is overwhelmed by the deleterious effects of mutation','Nothing changes at all','Mutation rates have no relationship to evolution'],answer:1,explain:'Too high a rate overwhelms the population with deleterious mutations.'},
+{topic:'mut',type:'id',q:'What is the name of the maize transposon system (two-part: an activator and a dissociation element) discovered by McClintock?',answers:['ac ds','acds','activator dissociation','ac ds system','activator dissociation system'],explain:'The Ac-Ds (Activator–Dissociation) system.'},
+{topic:'mut',type:'mc',q:'A base substitution that does NOT change the amino acid sequence is called a…',options:['Missense mutation','Nonsense mutation','Same-sense (silent) mutation','Frameshift mutation'],answer:2,explain:'A same-sense (silent) mutation exploits the degeneracy of the code.'},
+{topic:'mut',type:'mc',q:'Which of the following is an example of a structural chromosomal change?',options:['Trisomy 21','A duplication of a chromosome segment','Triploidy','Nullisomy'],answer:1,explain:'Structural changes include deletions, duplications, inversions and translocations.'},
+
+/* ---------------- CYTOPLASMIC INHERITANCE (17) ---------------- */
+{topic:'cyt',type:'id',q:'What general term describes inheritance patterns involving genetic material located OUTSIDE the nucleus?',answers:['extrachromosomal inheritance','cytoplasmic inheritance','extrachromosomal','cytoplasmic'],explain:'Extrachromosomal (cytoplasmic) inheritance involves plasmagenes in the cytoplasm.'},
+{topic:'cyt',type:'mc',q:'Caspari (1948) studied pigmentation in the flour moth Ephestia kuhniella. Allele A produces…',options:['Kynurenin, which gives pigmentation','Kappa particles','Chloroplasts','Sigma particles'],answer:0,explain:'Allele A is for pigmentation via kynurenin.'},
+{topic:'cyt',type:'mc',q:'In the snail Limnaea peregra, the direction of shell coiling of the offspring depends on…',options:['The offspring\'s own genotype only','The genotype of the mother','The genotype of the father','Environmental temperature'],answer:1,explain:'The phenotype of the offspring depends on the genotype of the MOTHER snail.'},
+{topic:'cyt',type:'id',q:'What term describes the phenomenon where the phenotype of an offspring is determined by the genotype of its mother (as in snail coiling)?',answers:['maternal effect','maternal effects','maternal influence'],explain:'Maternal effect: the maternal parent\'s genotype determines the offspring\'s phenotype.'},
+{topic:'cyt',type:'mc',q:'In the snail cross, in which generation does the classic 3 dextral : 1 sinistral ratio finally appear?',options:['F₁','F₂','F₃','The parental generation'],answer:2,explain:'Only the F₃ generation segregates 3 dextral : 1 sinistral.'},
+{topic:'cyt',type:'mc',q:'The "grandchildless" mutation in Drosophila shows that…',options:['Offspring of a fertile homozygous female are all fully sterile, regardless of the male\'s genotype','All offspring die as embryos','Only males are affected','The mutation follows simple Mendelian inheritance'],answer:0,explain:'The gene is transmitted through the egg cytoplasm and prevents normal reproductive development.'},
+{topic:'cyt',type:'mc',q:'Sager et al. (1960) studied streptomycin resistance in which organism, showing a non-Mendelian pattern?',options:['Chlamydomonas','Paramecium','Neurospora','Drosophila'],answer:0,explain:'In the single-celled green alga Chlamydomonas, inheritance of resistance is non-Mendelian.'},
+{topic:'cyt',type:'mc',q:'Sonneborn (1943) studied the "killer" trait in Paramecium aurelia. A killer must have…',options:['Only the K gene','The K gene AND cytoplasmic particles called kappa','Only kappa particles','A chloroplast genome'],answer:1,explain:'The killer needs both the nuclear gene K and the cytoplasmic kappa particles.'},
+{topic:'cyt',type:'easy',q:'Which scientist (1909) discovered the non-Mendelian, maternal inheritance of leaf pigmentation in the four o\'clock plant, Mirabilis jalapa?',options:['Correns','Mendel','Sutton','Boveri'],answer:0,explain:'Correns showed that pigmentation in Mirabilis jalapa is inherited only through the female parent.'},
+{topic:'cyt',type:'mc',q:'A plant cell that contains BOTH normal (green) and mutant (white) chloroplasts is said to show…',options:['Heteroplasmy','Aneuploidy','Epistasis','Pleiotropy'],answer:0,explain:'Heteroplasmy is the presence of more than one type of organelle genome in a cell.'},
+{topic:'cyt',type:'mc',q:'In yeast, which petite mutant totally lacks the mitochondrial genome (rho⁰)?',options:['Segregational (nuclear) petite','Neutral petite','Suppressive petite','Wild-type'],answer:1,explain:'Neutral petites (rho⁰) completely lack the mitochondrial genome.'},
+{topic:'cyt',type:'mc',q:'The human mitochondrial genome contains…',options:['37 genes, 13 of which encode proteins','13 genes, all encoding proteins','About 20,000 genes','No genes — only ribosomes'],answer:0,explain:'Human mtDNA has 37 genes, 13 of which encode proteins.'},
+{topic:'cyt',type:'mc',q:'Leber\'s Hereditary Optical Neuropathy (LHON) is caused by mutations in…',options:['Several different mitochondrial genes affecting the optic nerves','A nuclear gene on chromosome 21','The kappa particles','Chloroplast DNA'],answer:0,explain:'LHON results from mutations in several mitochondrial genes.'},
+{topic:'cyt',type:'mc',q:'Cytoplasmic male sterility (CMS) is used in corn mainly to…',options:['Increase the mutation rate','Eliminate the need for manual detasselling in hybrid seed production','Make the plants polyploid','Produce kappa particles'],answer:1,explain:'CMS lets breeders use a sterile female parent without manual detasselling.'},
+{topic:'cyt',type:'mc',q:'Which of the following is NOT one of the criteria suggesting extrachromosomal inheritance?',options:['Difference in reciprocal cross results','Non-Mendelian segregation','Non-mappability with known nuclear genes','Strict Mendelian 3:1 ratios in every generation'],answer:3,explain:'Strict Mendelian ratios indicate nuclear inheritance, not extrachromosomal.'},
+{topic:'cyt',type:'mc',q:'In Drosophila, sigma particles cause CO₂ sensitivity. They require a nuclear gene, but their transmission is…',options:['Paternal','Through the maternal line','Random','Through the Y chromosome'],answer:1,explain:'Sigma particles require a nuclear gene, but transmission is through the maternal line.'},
+{topic:'cyt',type:'mc',q:'Episomes are best described as…',options:['Chromosomal pigments found in moths','Genetic elements that can exist in the host chromosome or as independently replicating plasmids, and are infective','Particles that cause shell coiling in snails','Proteins that restructure chromatin'],answer:1,explain:'Episomes can be part of the host chromosomal DNA or exist as an independently replicating plasmid.'}
+];
+
+/* =========================================================
+   STATE & HELPERS
+   ========================================================= */
 const TOPICS = [
-  {id:'all', name:'All Topics',             desc:'Mixed questions from all three lectures'},
-  {id:'reg', name:'Gene Regulation',        desc:'Lecture 12 — genetic code, operons, epigenetics'},
-  {id:'mut', name:'Mutations',              desc:'Lecture 13 — chromosomal & gene mutations'},
-  {id:'cyt', name:'Cytoplasmic Inheritance',desc:'Lecture 14 — maternal & extrachromosomal inheritance'}
+  {id:'all', name:'All Topics', desc:'Mixed questions'},
+  {id:'reg', name:'Gene Regulation', desc:'Lecture 12'},
+  {id:'mut', name:'Mutations', desc:'Lecture 13'},
+  {id:'cyt', name:'Cytoplasmic Inheritance', desc:'Lecture 14'}
 ];
 
 const state = {
-  topic: 'all',
-  pool: [],
-  i: 0,
-  score: 0,
-  answered: false,
-  results: [],
-  lastTopic: 'all'
+  topic: 'all', pool: [], i: 0, score: 0, answered: false,
+  results: [], lastTopic: 'all', lastCount: 20
 };
 
 const $ = id => document.getElementById(id);
@@ -287,57 +355,89 @@ function showScreen(id){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-/* ---------- Topic list ---------- */
 function buildTopicList(){
   const box = $('topicList');
   box.innerHTML = '';
   TOPICS.forEach(t => {
     const el = document.createElement('div');
     el.className = 'topic' + (t.id === state.topic ? ' selected' : '');
-    el.innerHTML = `
-      <div class="dot"></div>
-      <div class="meta">
-        <div class="name">${escapeHtml(t.name)}</div>
-        <div class="desc">${escapeHtml(t.desc)}</div>
-      </div>
-    `;
+    el.innerHTML = `<div class="dot"></div><div class="meta"><div class="name">${escapeHtml(t.name)}</div><div class="desc">${escapeHtml(t.desc)}</div></div>`;
     el.addEventListener('click', () => {
       state.topic = t.id;
       document.querySelectorAll('.topic').forEach(x=>x.classList.remove('selected'));
       el.classList.add('selected');
+      $('numQuestionsVal').textContent = $('numQuestions').value;
     });
     box.appendChild(el);
   });
 }
 
-/* ---------- API call ---------- */
-async function fetchQuestions(topic, difficulty, count){
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic, difficulty, count })
+/* =========================================================
+   HYBRID FETCH LOGIC (HARD-CODED + LLM)
+   ========================================================= */
+async function getQuestions(topic, difficulty, count){
+  // 1. Get all hard-coded questions for this topic
+  let hardCoded = QUESTIONS.filter(q => topic === 'all' || q.topic === topic);
+  hardCoded = hardCoded.map(q => {
+    // prep hardcoded MCQs
+    if(q.type === 'mc'){
+      const opts = q.options.map((text,i)=>({text, correct: i===q.answer}));
+      shuffle(opts);
+      return {...q, options: opts};
+    }
+    return q;
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  if (!data.questions || !Array.isArray(data.questions)) throw new Error('Invalid response from server');
-  return data.questions.map(q => ({
-    type: 'mc',
-    q: q.question,
-    options: q.options.map((text, i) => ({ text, correct: i === q.answer })),
-    explain: q.explanation,
-    topic
-  })).map(prepOptions);
+
+  let finalPool = [];
+
+  if (count <= hardCoded.length) {
+    // Serve ONLY from hard-coded pool
+    finalPool = shuffle(hardCoded.slice()).slice(0, count);
+  } else {
+    // Serve ALL hard-coded + LLM for the remainder
+    const needed = count - hardCoded.length;
+    finalPool = [...hardCoded]; // include all 59
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, difficulty, count: needed })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      if (data.questions && Array.isArray(data.questions)) {
+        const apiQs = data.questions.map(q => {
+          const opts = q.options.map((text, i) => ({ text, correct: i === q.answer }));
+          shuffle(opts);
+          return {
+            type: 'mc',
+            q: q.question,
+            options: opts,
+            explain: q.explanation,
+            topic: topic === 'all' ? 'reg' : topic // fallback tag
+          };
+        });
+        finalPool = finalPool.concat(apiQs);
+      }
+    } catch (err) {
+      console.error("LLM Generation failed:", err);
+      alert("Could not generate extra questions:\n\n" + err.message + "\n\nPlaying with only the built-in questions.");
+      // If LLM fails, just return the hard-coded ones (up to requested count or max available)
+      finalPool = shuffle(finalPool);
+      return finalPool; 
+    }
+  }
+
+  return shuffle(finalPool); // final shuffle of combined pool
 }
 
-function prepOptions(q){
-  const opts = q.options.slice();
-  shuffle(opts);
-  return { ...q, options: opts };
-}
-
-/* ---------- Start quiz ---------- */
+/* =========================================================
+   QUIZ FLOW
+   ========================================================= */
 async function startQuiz(){
-  const count = parseInt($('numQuestions').value) || 15;
+  const count = parseInt($('numQuestions').value) || 20;
   const topic = state.topic;
   const difficulty = 'mixed';
 
@@ -346,8 +446,9 @@ async function startQuiz(){
   $('startLoading').classList.add('show');
 
   try {
-    const pool = await fetchQuestions(topic, difficulty, count);
+    const pool = await getQuestions(topic, difficulty, count);
     state.lastTopic = topic;
+    state.lastCount = count;
     state.pool = pool;
     state.i = 0;
     state.score = 0;
@@ -357,7 +458,7 @@ async function startQuiz(){
     showScreen('quizScreen');
     renderQuestion();
   } catch (err){
-    alert('Could not generate quiz:\n\n' + err.message);
+    alert('Error: ' + err.message);
   } finally {
     $('startBtn').disabled = false;
     $('startBtn').textContent = 'Start Quiz →';
@@ -365,7 +466,6 @@ async function startQuiz(){
   }
 }
 
-/* ---------- Render question ---------- */
 function currentQ(){ return state.pool[state.i]; }
 
 function renderQuestion(){
@@ -375,23 +475,48 @@ function renderQuestion(){
   $('topicBadge').textContent = topicLabel(q.topic);
   $('counter').textContent = `Question ${state.i + 1} of ${state.pool.length}`;
   $('bar').style.width = ((state.i) / state.pool.length * 100) + '%';
+  
   $('qText').textContent = q.q;
   $('feedback').innerHTML = '';
   $('nextBtn').style.display = 'none';
 
   const optBox = $('optionsBox');
+  const idBox = $('idBox');
   optBox.innerHTML = '';
-  const letters = ['A','B','C','D'];
-  q.options.forEach((opt, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option';
-    btn.innerHTML = `<span class="letter">${letters[idx]}</span><span>${escapeHtml(opt.text)}</span>`;
-    btn.addEventListener('click', () => answerMC(idx));
-    optBox.appendChild(btn);
-  });
+
+  if (q.type === 'mc') {
+    optBox.style.display = 'grid';
+    if(idBox) idBox.style.display = 'none';
+    
+    const letters = ['A','B','C','D'];
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerHTML = `<span class="letter">${letters[idx]}</span><span>${escapeHtml(opt.text)}</span>`;
+      btn.addEventListener('click', () => answerMC(idx));
+      optBox.appendChild(btn);
+    });
+  } else {
+    // Identification (only exists in hard-coded pool)
+    optBox.style.display = 'none';
+    if (!idBox) {
+      // Create ID box if it doesn't exist (just in case)
+      const newIdBox = document.createElement('div');
+      newIdBox.id = 'idBox';
+      newIdBox.className = 'idbox';
+      newIdBox.innerHTML = `<input id="idInput" type="text" placeholder="Type your answer…" autocomplete="off"><button id="submitId" class="btn">Submit</button>`;
+      $('qText').after(newIdBox);
+    }
+    $('idBox').style.display = 'flex';
+    const input = $('idInput');
+    input.value = '';
+    input.disabled = false;
+    input.focus();
+    $('submitId').onclick = answerID;
+    input.onkeydown = (e) => { if(e.key === 'Enter'){ e.preventDefault(); answerID(); } };
+  }
 }
 
-/* ---------- Answer ---------- */
 function answerMC(idx){
   if (state.answered) return;
   state.answered = true;
@@ -402,22 +527,53 @@ function answerMC(idx){
     b.disabled = true;
     if (q.options[i].correct) b.classList.add('correct');
   });
+  
   const chosen = q.options[idx];
   if (!chosen.correct) buttons[idx].classList.add('wrong');
 
   const correctText = q.options.find(o => o.correct).text;
-  state.results.push({
-    q: q.q, userAnswer: chosen.text, correctAnswer: correctText,
-    explain: q.explain, correct: chosen.correct, topic: q.topic
-  });
-  if (chosen.correct) state.score++;
-  $('scoreVal').textContent = state.score;
+  recordResult(chosen.correct, chosen.text, correctText, q.explain);
+  finishQuestion(chosen.correct);
+}
 
+function answerID(){
+  if (state.answered) return;
+  const q = currentQ();
+  const input = $('idInput');
+  const raw = input.value;
+  const norm = raw.toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  
+  const isCorrect = norm !== '' && q.answers.some(a => a.toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim() === norm);
+  
+  state.answered = true;
+  input.disabled = true;
+  $('submitId').disabled = true;
+
+  recordResult(isCorrect, raw.trim() || '(skipped)', q.answers[0], q.explain);
+  finishQuestion(isCorrect);
+}
+
+function recordResult(correct, userAnswer, correctAnswer, explain){
+  const q = currentQ();
+  state.results.push({ q: q.q, userAnswer, correctAnswer, explain, correct, topic: q.topic });
+  if(correct) state.score++;
+  $('scoreVal').textContent = state.score;
+}
+
+function finishQuestion(correct){
+  const q = currentQ();
   const fb = $('feedback');
-  fb.className = 'feedback ' + (chosen.correct ? 'good' : 'bad');
+  fb.className = 'feedback ' + (correct ? 'good' : 'bad');
+
+  let ansLine = '';
+  if (q.type === 'id' || !correct) {
+    const ansText = q.answers ? q.answers[0] : q.options.find(o=>o.correct).text;
+    ansLine = `<div class="ansline">Correct answer: <strong>${escapeHtml(ansText)}</strong></div>`;
+  }
+
   fb.innerHTML = `
-    <span class="verdict">${chosen.correct ? '✅ Correct!' : '❌ Not quite.'}</span>
-    ${chosen.correct ? '' : `<div class="ansline">Correct answer: <strong>${escapeHtml(correctText)}</strong></div>`}
+    <span class="verdict">${correct ? '✅ Correct!' : '❌ Not quite.'}</span>
+    ${ansLine}
     <div class="exp">${escapeHtml(q.explain)}</div>
   `;
 
@@ -427,7 +583,6 @@ function answerMC(idx){
   next.focus();
 }
 
-/* ---------- Next ---------- */
 function nextQuestion(){
   if (!state.answered) return;
   if (state.i === state.pool.length - 1) {
@@ -438,7 +593,9 @@ function nextQuestion(){
   renderQuestion();
 }
 
-/* ---------- Results ---------- */
+/* =========================================================
+   RESULTS & RETRY
+   ========================================================= */
 function showResults(){
   const total = state.pool.length;
   const score = state.score;
@@ -472,13 +629,12 @@ function showResults(){
     box.appendChild(div);
   });
 
-  $('retryCount').value = total;
+  $('retryCount').value = Math.min(state.lastCount, 100);
   showScreen('resultScreen');
 }
 
-/* ---------- Retry ---------- */
 async function startRetry(){
-  const count = parseInt($('retryCount').value) || 15;
+  const count = parseInt($('retryCount').value) || 20;
   const strategy = document.querySelector('input[name="strategy"]:checked').value;
 
   const difficultyMap = { same: 'mixed', harder: 'hard', easier: 'easy', focus: 'mixed' };
@@ -497,7 +653,9 @@ async function startRetry(){
   $('retryLoading').classList.add('show');
 
   try {
-    const pool = await fetchQuestions(topic, difficulty, count);
+    const pool = await getQuestions(topic, difficulty, count);
+    state.lastTopic = topic;
+    state.lastCount = count;
     state.pool = pool;
     state.i = 0;
     state.score = 0;
@@ -515,7 +673,9 @@ async function startRetry(){
   }
 }
 
-/* ---------- Wire up ---------- */
+/* =========================================================
+   EVENT WIRING
+   ========================================================= */
 $('startBtn').addEventListener('click', startQuiz);
 $('nextBtn').addEventListener('click', nextQuestion);
 $('retryStartBtn').addEventListener('click', startRetry);
