@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genetics Quiz · Gene Regulation, Mutations & Cytoplasmic Inheritance</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0b1220;
+    --card:rgba(30,41,59,.78);
+    --line:rgba(148,163,184,.18);
+    --txt:#e2e8f0;
+    --muted:#94a3b8;
+    --accent:#38bdf8;
+    --accent2:#a78bfa;
+    --ok:#22c55e;
+    --no:#ef4444;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 15% -10%, #1e3a5f 0%, transparent 45%),
+      radial-gradient(circle at 90% 110%, #3b1f4e 0%, transparent 45%);
+    background-attachment:fixed;
+    min-height:100vh;color:var(--txt);
+    display:flex;justify-content:center;padding:28px 16px 60px;
+    line-height:1.5;
+  }
+  .wrap{width:100%;max-width:780px}
+  .screen{display:none}
+  .screen.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .card{
+    background:var(--card);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:32px 28px;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+  }
+  h1{font-size:clamp(1.6rem,4vw,2.1rem);letter-spacing:-.5px;
+     background:linear-gradient(90deg,var(--accent),var(--accent2));
+     -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .logo{font-size:2.6rem;text-align:center;margin-bottom:6px}
+  .sub{color:var(--muted);text-align:center;font-size:.9rem;margin-top:6px}
+  .instructions{color:var(--muted);font-size:.9rem;margin:18px 0 22px;text-align:center}
+
+  /* ---------- topic picker ---------- */
+  .topic-list{display:grid;gap:10px;margin-bottom:24px}
+  .topic{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 16px;border-radius:14px;cursor:pointer;
+    border:1px solid var(--line);background:rgba(15,23,42,.6);
+    transition:.18s;
+  }
+  .topic:hover{border-color:rgba(56,189,248,.5);transform:translateY(-1px)}
+  .topic.selected{border-color:var(--accent);background:rgba(56,189,248,.12);
+    box-shadow:0 0 0 1px rgba(56,189,248,.35) inset}
+  .topic .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted);flex:0 0 auto}
+  .topic.selected .dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .topic .meta{flex:1}
+  .topic .name{font-weight:600;font-size:.98rem}
+  .topic .desc{font-size:.78rem;color:var(--muted)}
+  .topic .count{font-size:.75rem;color:var(--accent);font-weight:700;white-space:nowrap}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;
+    border-radius:12px;padding:13px 22px;border:1px solid transparent;
+    transition:.18s;
+  }
+  .btn.primary{
+    width:100%;color:#04121e;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    box-shadow:0 8px 24px rgba(56,189,248,.28);
+  }
+  .btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+  /* ---------- quiz header ---------- */
+  .qhead{display:flex;justify-content:space-between;align-items:center;
+         font-size:.8rem;color:var(--muted);margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .badge{padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:700;
+         letter-spacing:.4px;text-transform:uppercase;
+         background:rgba(56,189,248,.14);color:var(--accent);border:1px solid rgba(56,189,248,.3)}
+  .badge.mut{background:rgba(244,114,182,.14);color:#f472b6;border-color:rgba(244,114,182,.3)}
+  .badge.cyt{background:rgba(34,197,94,.14);color:#4ade80;border-color:rgba(34,197,94,.3)}
+  .scorepill{font-weight:700;color:var(--accent)}
+  .progress{height:8px;border-radius:99px;background:rgba(148,163,184,.15);overflow:hidden;margin-bottom:26px}
+  .progress .bar{height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s ease}
+
+  .qtext{font-size:1.12rem;font-weight:600;line-height:1.5;margin-bottom:22px}
+  .qtype{font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+
+  /* ---------- options ---------- */
+  .options{display:grid;gap:10px}
+  .option{
+    text-align:left;font-family:inherit;font-size:.95rem;color:var(--txt);
+    padding:14px 16px;border-radius:12px;cursor:pointer;
+    background:rgba(15,23,42,.65);border:1px solid var(--line);
+    transition:.16s;display:flex;gap:12px;align-items:flex-start;
+  }
+  .option:hover:not(:disabled){border-color:rgba(56,189,248,.55);background:rgba(56,189,248,.08)}
+  .option .letter{
+    flex:0 0 auto;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
+    font-size:.75rem;font-weight:800;background:rgba(148,163,184,.15);color:var(--muted);
+  }
+  .option.correct{background:rgba(34,197,94,.15);border-color:var(--ok)}
+  .option.correct .letter{background:var(--ok);color:#052e16}
+  .option.wrong{background:rgba(239,68,68,.13);border-color:var(--no)}
+  .option.wrong .letter{background:var(--no);color:#450a0a}
+  .option:disabled{cursor:default}
+
+  /* ---------- identification ---------- */
+  .idbox{display:flex;gap:10px;flex-wrap:wrap}
+  .idbox input{
+    flex:1;min-width:200px;font-family:inherit;font-size:.95rem;color:var(--txt);
+    background:rgba(15,23,42,.8);border:1px solid var(--line);
+    border-radius:12px;padding:13px 16px;outline:none;transition:.16s;
+  }
+  .idbox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+  .idbox input:disabled{opacity:.7}
+  .idbox .btn{padding:13px 20px;color:#04121e;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));border:none}
+  .idhint{font-size:.76rem;color:var(--muted);margin-top:8px}
+
+  /* ---------- feedback ---------- */
+  .feedback{margin-top:20px;border-radius:14px;padding:16px 18px;font-size:.9rem;
+            border:1px solid var(--line);background:rgba(15,23,42,.6);
+            animation:fade .25s ease}
+  .feedback.good{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.1)}
+  .feedback.bad{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.1)}
+  .feedback .verdict{font-weight:800;margin-bottom:6px;display:block}
+  .feedback.good .verdict{color:#4ade80}
+  .feedback.bad .verdict{color:#f87171}
+  .feedback .ansline{margin-bottom:8px;color:var(--muted)}
+  .feedback .ansline strong{color:var(--txt)}
+  .feedback .exp{color:#cbd5e1;font-size:.86rem}
+
+  .actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end}
+
+  /* ---------- results ---------- */
+  .ring{
+    width:170px;height:170px;border-radius:50%;margin:6px auto 22px;
+    display:grid;place-items:center;position:relative;
+    background:conic-gradient(var(--accent) 0deg, rgba(148,163,184,.15) 0deg);
+    transition:background .8s ease;
+  }
+  .ring::before{content:'';position:absolute;inset:12px;border-radius:50%;background:#111c2e}
+  .ring .inner{position:relative;text-align:center}
+  .ring .pct{font-size:2.3rem;font-weight:800;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .ring .frac{font-size:.8rem;color:var(--muted)}
+  .reshead{text-align:center;margin-bottom:26px}
+  .reshead h2{font-size:1.4rem;margin-bottom:6px}
+  .reshead p{color:var(--muted);font-size:.9rem}
+
+  .review{margin-top:8px;display:grid;gap:12px;max-height:none}
+  .review h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.8px;
+             color:var(--muted);margin:26px 0 4px}
+  .rev-item{border-radius:14px;padding:14px 16px;font-size:.86rem;
+            border:1px solid var(--line);background:rgba(15,23,42,.55);
+            border-left-width:4px}
+  .rev-item.ok{border-left-color:var(--ok)}
+  .rev-item.no{border-left-color:var(--no)}
+  .rev-q{font-weight:600;margin-bottom:8px;display:flex;gap:9px}
+  .rev-q .num{flex:0 0 auto;color:var(--muted);font-weight:800}
+  .rev-line{color:var(--muted);margin-bottom:3px}
+  .rev-line strong{color:var(--txt)}
+  .rev-line.bad strong{color:#f87171}
+  .rev-line.good strong{color:#4ade80}
+  .rev-exp{color:#94a3b8;font-size:.8rem;margin-top:6px;font-style:italic}
+
+  .resbtns{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+  .resbtns .btn{flex:1;min-width:150px}
+
+  @media(max-width:520px){
+    .card{padding:24px 18px;border-radius:16px}
+    .qtext{font-size:1rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ START ============ -->
+  <section id="startScreen" class="screen active">
+    <div class="card">
+      <div class="logo">🧬</div>
+      <h1>Genetics Quiz</h1>
+      <p class="sub">Lectures 12 – 14 · Gene Regulation · Mutations · Cytoplasmic Inheritance</p>
+      <p class="instructions">
+        Mixed multiple-choice and identification questions.<br>
+        Every answer comes with an explanation, so you learn as you go.
+      </p>
+      <div id="topicList" class="topic-list"></div>
+      <button id="startBtn" class="btn primary">Start Quiz →</button>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="quizScreen" class="screen">
+    <div class="card">
+      <div class="qhead">
+        <span id="topicBadge" class="badge">Topic</span>
+        <span id="counter">Question 1 of 20</span>
+        <span class="scorepill">Score: <span id="scoreVal">0</span></span>
+      </div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+
+      <div class="qtype" id="qType">Multiple Choice</div>
+      <div class="qtext" id="qText"></div>
+
+      <div class="options" id="optionsBox"></div>
+      <div class="idbox" id="idBox" style="display:none">
+        <input id="idInput" type="text" placeholder="Type your answer…" autocomplete="off" spellcheck="false">
+        <button id="submitId" class="btn">Submit</button>
+      </div>
+      <div class="idhint" id="idHint" style="display:none">Spelling doesn't have to be perfect — just get the key term right.</div>
+
+      <div id="feedback"></div>
+
+      <div class="actions">
+        <button id="nextBtn" class="btn ghost" style="display:none">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="resultScreen" class="screen">
+    <div class="card">
+      <div class="ring" id="ring">
+        <div class="inner">
+          <div class="pct" id="pctText">0%</div>
+          <div class="frac" id="fracText">0 / 0</div>
+        </div>
+      </div>
+      <div class="reshead">
+        <h2 id="resTitle">Nice work!</h2>
+        <p id="resSub"></p>
+      </div>
+
+      <h3>Review</h3>
+      <div class="review" id="reviewBox"></div>
+
+      <div class="resbtns">
+        <button id="retryBtn" class="btn primary">Try Again</button>
+        <button id="homeBtn" class="btn ghost">Change Topic</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   QUESTION BANK
+   type: 'mc' = multiple choice | 'id' = identification
+   topic: 'reg' | 'mut' | 'cyt'
+   ========================================================= */
+const QUESTIONS = [
+
+/* ---------------- GENE REGULATION (Lecture 12) ---------------- */
+{
+  topic:'reg', type:'mc',
+  q:'Why is the genetic code a triplet (three-letter) code?',
+  options:[
+    'Because DNA has three strands',
+    'Because 4³ = 64 codons is more than enough to specify the 20 amino acids',
+    'Because there are exactly 20 tRNA molecules',
+    'Because each amino acid contains three nucleotides'
+  ],
+  answer:1,
+  explain:'One nucleotide gives only 4 possibilities and two give 16 — not enough for 20 amino acids. Three nucleotides give 64 codons, which works. Bacterial experiments later confirmed it.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Who used synthetic poly-U RNA in an E. coli translational system to produce poly-phenylalanine, cracking the first codon?',
+  options:[
+    'James Watson and Francis Crick',
+    'Marshall Nirenberg and J. Heinrich Matthaei',
+    'Har Gobind Khorana',
+    'François Jacob and Jacques Monod'
+  ],
+  answer:1,
+  explain:'Nirenberg and Matthaei (1961) used poly-U RNA and got poly-phenylalanine (poly-Phe) — a major step in breaking the genetic code.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'What did Har Gobind Khorana prove about the genetic code?',
+  options:[
+    'That the code is read in groups of three (codons) and that some codons signal start or stop',
+    'That the code is overlapping and comma-free',
+    'That RNA is the genetic material of viruses',
+    'That codons are made of four nucleotides'
+  ],
+  answer:0,
+  explain:'Khorana showed the nucleotide code is always transmitted in groups of 3 called codons, and that some of them prompt the cell to start or stop protein synthesis.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'The code is described as "non-overlapping." What does that mean?',
+  options:[
+    'mRNA is read three bases at a time without skipping any bases',
+    'Each nucleotide belongs to only one codon and is read only once',
+    'Codons can be read in either direction',
+    'Several codons can code for the same amino acid'
+  ],
+  answer:1,
+  explain:'Non-overlapping (non-ambiguous) means each nucleotide is part of only one codon and is read only once. The "no skipping" property is what "comma free" means.'
+},
+{
+  topic:'reg', type:'id',
+  q:'Which hypothesis, proposed by Crick in 1961, explains the degeneracy of the code by stating that the first two positions pair precisely but the third position may pair loosely?',
+  answers:['wobble hypothesis','wobble','the wobble hypothesis'],
+  explain:'The Wobble Hypothesis: the first two positions on mRNA and tRNA pair precisely, but pairing at the third position may be "wobbly," which is why one tRNA can recognize more than one codon.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Which of the following is an exception to the universality of the genetic code, found in mitochondria?',
+  options:[
+    'UAA codes for tryptophan',
+    'UGA codes for tryptophan and AUA codes for methionine',
+    'AUG codes for valine',
+    'There are no exceptions — the code is 100% universal'
+  ],
+  answer:1,
+  explain:'The code is nearly universal. Exceptions occur in mitochondria, where UGA = UGG (tryptophan) and AUA = AUG (methionine).'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Which of the following is NOT a stop (chain-termination) codon?',
+  options:['UAA','UAG','UGA','AUG'],
+  answer:3,
+  explain:'AUG is the START codon (methionine) that defines the open reading frame. The three stop signals are UAA, UAG and UGA — they have no corresponding tRNA.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Who coined the term "operon" and won the 1965 Nobel Prize for it?',
+  options:[
+    'François Jacob and Jacques Monod',
+    'Watson and Crick',
+    'Fire and Mello',
+    'Beadle and Tatum'
+  ],
+  answer:0,
+  explain:'François Jacob and Jacques Monod coined "operon." An operon is a group of genes transcribed together from one promoter into a single polycistronic mRNA.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'In the lac operon, which molecule acts as the inducer that turns the gene ON?',
+  options:['Glucose','Allolactose','Tryptophan','Lactose permease'],
+  answer:1,
+  explain:'Allolactose (formed when lactose is present) binds the repressor and changes its conformation, so it can no longer bind the operator — the operon turns ON.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'The trp operon is best described as…',
+  options:[
+    'An inducible operon under positive control',
+    'A repressible operon that is normally ON until tryptophan activates the repressor',
+    'A constitutive operon expressed all the time',
+    'An operon found only in eukaryotes'
+  ],
+  answer:1,
+  explain:'The trp operon is repressible and under negative control. It is usually ON; when tryptophan (a corepressor) is present, it activates the repressor and shuts the operon OFF.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Which operon is the lecture\'s example of POSITIVE control?',
+  options:['Lac operon','Trp operon','Arabinose (ara) operon','Sigma operon'],
+  answer:2,
+  explain:'The arabinose (ara) operon converts L-arabinose to xylulose-5-P. AraC protein changes conformation so that transcription is activated — an example of positive control.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'According to the Davidson–Britten model (1979) of eukaryotic gene regulation, which two elements are involved?',
+  options:[
+    'Operator and repressor',
+    'Sensor and integrator genes',
+    'Promoter and terminator',
+    'Kappa particles and plasmids'
+  ],
+  answer:1,
+  explain:'Sensors, each adjacent to an integrator gene, recognize molecular signals. When activated, the integrator gene is transcribed into activator RNA, which is recognized by receptors near structural genes.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Which of the following is a PRE-transcriptional control mechanism?',
+  options:[
+    'Alternative splicing of the primary transcript',
+    'DNA methylation, chromatin structure and gene amplification',
+    'Phosphorylation of a finished protein',
+    'Length of the poly-A tail'
+  ],
+  answer:1,
+  explain:'Pre-transcriptional control includes gene amplification (e.g. rRNA in amphibian oocytes), chromatin structure (heterochromatin vs euchromatin) and DNA methylation.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Making different mRNAs from the same primary transcript by using different exons is called…',
+  options:['Gene amplification','Alternative splicing','Wobbling','Translocation'],
+  answer:1,
+  explain:'Alternative splicing is a transcriptional/processing-level control that lets one gene produce several different proteins.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'At the translational level, what is the effect of a longer poly-A tail?',
+  options:[
+    'The mRNA is degraded faster',
+    'The mRNA can exist (and be translated) for a longer time',
+    'It changes the reading frame',
+    'It converts the mRNA into a polycistronic message'
+  ],
+  answer:1,
+  explain:'Translational control depends on mRNA half-life: the longer the poly-A tail, the longer the mRNA survives, and the more protein can be produced.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Bovine proinsulin being cleaved into two polypeptide chains with ~30 amino acids removed to form insulin is an example of…',
+  options:['Pre-transcriptional control','Transcriptional control','Translational control','Post-translational control'],
+  answer:3,
+  explain:'Post-translational control: proteins are modified after translation by adding sugars or phosphate groups, or by removing sequences (as in proinsulin → insulin).'
+},
+{
+  topic:'reg', type:'id',
+  q:'What do we call the study of mechanisms that change gene expression by modifying DNA WITHOUT altering its base sequence?',
+  answers:['epigenetics','epigenetic','epigenetics '],
+  explain:'Epigenetics ("above" genetics) studies heritable changes in gene expression that do not involve changes in the DNA base sequence. The epigenome tells genes when to switch on or off.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Which histone modification loosens/unravels DNA and makes genes more available for activation?',
+  options:['Histone methylation','Histone acetylation','DNA methylation','Gene amplification'],
+  answer:1,
+  explain:'Histone methylation tightens DNA and restricts access to genes, while histone acetylation unravels the DNA, making genes more available for activation.'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Fire and Mello (Nobel Prize 2006) discovered…',
+  options:['The operon','RNA interference (RNAi)','Transposons','The wobble hypothesis'],
+  answer:1,
+  explain:'They discovered RNA interference (RNAi). Double-stranded noncoding RNAs are processed into siRNAs (which cause RNA degradation) and miRNAs (which inhibit translation).'
+},
+{
+  topic:'reg', type:'id',
+  q:'What term describes a gene that is expressed all the time (as opposed to an inducible gene)?',
+  answers:['constitutive','constitutive gene','constitutive genes'],
+  explain:'Genes are either inducible (only expressed when needed) or constitutive (expressed all the time).'
+},
+{
+  topic:'reg', type:'mc',
+  q:'Two lab mice are genetically identical but one has a brown coat and the other yellow (agouti). The difference is best explained by…',
+  options:[
+    'Different alleles of the agouti gene',
+    'DNA methylation silencing the agouti gene in one mouse',
+    'A translocation between chromosomes',
+    'Different numbers of chromosomes'
+  ],
+  answer:1,
+  explain:'Both mice have the agouti gene; in the healthy (brown) mouse a methyl group binds the agouti gene and silences it during development — a classic epigenetic effect.'
+},
+
+/* ---------------- MUTATIONS (Lecture 13) ---------------- */
+{
+  topic:'mut', type:'mc',
+  q:'Mutations are best defined as changes in the genetic material that are…',
+  options:[
+    'Temporary and reversible',
+    'Heritable and essentially permanent',
+    'Always lethal to the cell',
+    'Limited to somatic cells'
+  ],
+  answer:1,
+  explain:'Mutations are heritable and essentially permanent changes in the genetic material. They are the ultimate source of variation for evolution.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Organisms having three or more sets of the genome are called…',
+  options:['Aneuploids','Polyploids','Monoploids','Monosomics'],
+  answer:1,
+  explain:'Polyploids have 3 or more sets of chromosomes (3x, 4x, 5x, 6x…). Euploidy involving only one set is monoploidy.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Seedless watermelon is typically produced by crossing a…',
+  options:['2n plant with a 2n plant','4n plant with a 2n plant','3n plant with a 3n plant','2n plant with a 1n plant'],
+  answer:1,
+  explain:'Triploids (3x) arise from a cross between a tetraploid (4n) and a diploid (2n). Triploids are sterile, giving seedless fruit like bananas and seedless watermelon.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Tobacco (Nicotiana tabacum, 2n = 4x = 48), formed from N. sylvestris × N. tomentosiformis, is an example of a(n)…',
+  options:['Autotetraploid','Allotetraploid','Allohexaploid','Monosomic'],
+  answer:1,
+  explain:'An allotetraploid has chromosome sets from two or more different species — exactly what happened in tobacco.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Bread wheat (Triticum aestivum, 2n = 6x = 42) is a classic example of a(n)…',
+  options:['Autotriploid','Allotetraploid','Allohexaploid','Nullisomic'],
+  answer:2,
+  explain:'Bread wheat is an allohexaploid (AABBDD) formed through successive hybridization and accidental chromosome doubling events.'
+},
+{
+  topic:'mut', type:'id',
+  q:'What kind of polyploid is composed of chromosome sets originating from two or more DIFFERENT species?',
+  answers:['allopolyploid','allopolyploids','allo polyploid','allopolyploidy'],
+  explain:'Allopolyploids combine sets from different species (e.g. tobacco, canola, bread wheat, Raphanobrassica). Autopolyploids come from within a single species.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Which of the following is an AUTOPOLYPLOID?',
+  options:['Bread wheat','Cultivated potato (4x)','Tobacco','Raphanobrassica'],
+  answer:1,
+  explain:'Cultivated potato is an autotetraploid (4x) — all of its sets originate from within one species.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'An individual with a chromosome number of 2n + 1 is called…',
+  options:['Monosomic','Nullisomic','Trisomic','Tetrasomic'],
+  answer:2,
+  explain:'Aneuploidy names: monosomic = 2n−1, nullisomic = 2n−2, trisomic = 2n+1, tetrasomic = 2n+2.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Nondisjunction during meiosis produces gametes that are…',
+  options:['Always diploid','n+1 and n−1','Always n','2n and 4n'],
+  answer:1,
+  explain:'When homologous chromosomes or sister chromatids fail to separate, gametes end up with one extra (n+1) or one fewer (n−1) chromosome — the basis of aneuploidy.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Cri-du-chat syndrome, which causes mental retardation, is caused by…',
+  options:[
+    'A terminal deletion of the short arm of one chromosome 5',
+    'A trisomy of chromosome 21',
+    'A pericentric inversion of chromosome 9',
+    'A Robertsonian translocation'
+  ],
+  answer:0,
+  explain:'Cri-du-chat results from a terminal deletion of the short arm of one chromosome 5. Deletions are almost always lethal when homozygous.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'An inversion that INCLUDES the centromere is called…',
+  options:['Paracentric','Pericentric','Reciprocal','Terminal'],
+  answer:1,
+  explain:'Pericentric inversions include the centromere; paracentric inversions do not.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Translocation Down syndrome accounts for about 5% of all cases. Which mechanism causes it?',
+  options:[
+    'Nondisjunction in meiosis I',
+    'A Robertsonian translocation, typically between chromosomes 14 and 21',
+    'A deletion on chromosome 21',
+    'A pericentric inversion of chromosome 21'
+  ],
+  answer:1,
+  explain:'A Robertsonian translocation (e.g. 14/21) in a carrier parent can produce gametes that lead to trisomy 21 — translocation Down syndrome (~5% of cases).'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Substitution of adenine (A) by guanine (G), or of thymine (T) by cytosine (C), is called a…',
+  options:['Transversion','Transition','Frameshift','Deletion'],
+  answer:1,
+  explain:'Transitions substitute a purine for a purine (A↔G) or a pyrimidine for a pyrimidine (T↔C). Transversions swap a purine for a pyrimidine or vice versa.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'A base substitution that changes an amino-acid codon into a STOP codon is a…',
+  options:['Same-sense (silent) mutation','Missense mutation','Nonsense mutation','Frameshift mutation'],
+  answer:2,
+  explain:'Nonsense mutations create a premature stop codon, truncating the protein. Missense changes one amino acid; same-sense (silent) changes nothing.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Insertion or deletion of one or two nucleotides in a gene typically causes a…',
+  options:['Same-sense mutation','Frameshift mutation','Transition','Silent mutation'],
+  answer:1,
+  explain:'Adding or removing 1 or 2 nucleotides shifts the reading frame, causing extensive missense or immediate nonsense downstream. Inserting/deleting 3 nucleotides adds or removes an amino acid without shifting the frame.'
+},
+{
+  topic:'mut', type:'id',
+  q:'Which scientist discovered transposons ("jumping genes") in maize and won the 1983 Nobel Prize?',
+  answers:['barbara mcclintock','mcclintock','barbara mc clintock'],
+  explain:'Barbara McClintock (1902–1992) discovered the Ac-Ds (Activator-Dissociation) transposon system in maize, explaining variegated kernel colors that did not fit Mendelian ratios.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Colchicine is a chemical mutagen that causes chromosomal mutations by…',
+  options:[
+    'Breaking both DNA strands',
+    'Inhibiting spindle formation and preventing anaphase',
+    'Adding methyl groups to cytosine',
+    'Producing thymine dimers'
+  ],
+  answer:1,
+  explain:'Colchicine is an alkylating agent that inhibits spindle formation and prevents anaphase — which is exactly why it is used to induce polyploidy.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'What happens when the mutation rate is TOO HIGH in a population?',
+  options:[
+    'The population evolves much faster and benefits',
+    'The population is overwhelmed by the deleterious effects of mutation',
+    'Nothing changes at all',
+    'Mutation rates have no relationship to evolution'
+  ],
+  answer:1,
+  explain:'Too low a rate means the population is not evolving; too high a rate overwhelms the population with deleterious mutations. An optimum rate is beneficial.'
+},
+{
+  topic:'mut', type:'id',
+  q:'What is the name of the maize transposon system (two-part: an activator and a dissociation element) discovered by McClintock?',
+  answers:['ac ds','acds','activator dissociation','ac ds system','activator dissociation system'],
+  explain:'The Ac-Ds (Activator–Dissociation) system. Movement of transposons can produce colored, white and variegated kernels that do not fit Mendelian assortment.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'A base substitution that does NOT change the amino acid sequence is called a…',
+  options:['Missense mutation','Nonsense mutation','Same-sense (silent) mutation','Frameshift mutation'],
+  answer:2,
+  explain:'A same-sense (silent) mutation exploits the degeneracy of the code — the codon changes but the amino acid stays the same.'
+},
+{
+  topic:'mut', type:'mc',
+  q:'Which of the following is an example of a structural chromosomal change?',
+  options:['Trisomy 21','A duplication of a chromosome segment','Triploidy','Nullisomy'],
+  answer:1,
+  explain:'Structural changes include deletions, duplications, inversions and translocations. Trisomy, nullisomy and triploidy are numerical changes (aneuploidy/euploidy).'
+},
+
+/* ---------------- CYTOPLASMIC INHERITANCE (Lecture 14) ---------------- */
+{
+  topic:'cyt', type:'id',
+  q:'What general term describes inheritance patterns involving genetic material located OUTSIDE the nucleus?',
+  answers:['extrachromosomal inheritance','cytoplasmic inheritance','extrachromosomal','cytoplasmic'],
+  explain:'Extrachromosomal (cytoplasmic) inheritance involves plasmagenes/plasmons/cytogens in the cytoplasm. It tends to be maternal because the zygote gets most of its cytoplasm from the egg.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Caspari (1948) studied pigmentation in the flour moth Ephestia kuhniella. Allele A produces…',
+  options:['Kynurenin, which gives pigmentation','Kappa particles','Chloroplasts','Sigma particles'],
+  answer:0,
+  explain:'Allele A is for pigmentation via kynurenin; allele a is for non-pigmentation of the larval skin and eye. The effect fades in aa individuals — a delayed inheritance pattern.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'In the snail Limnaea peregra, the direction of shell coiling of the offspring depends on…',
+  options:[
+    'The offspring\'s own genotype only',
+    'The genotype of the mother',
+    'The genotype of the father',
+    'Environmental temperature'
+  ],
+  answer:1,
+  explain:'The phenotype of the offspring depends on the genotype of the MOTHER snail — a maternal effect. Only in the F₃ generation does the classic 3 dextral : 1 sinistral ratio appear.'
+},
+{
+  topic:'cyt', type:'id',
+  q:'What term describes the phenomenon where the phenotype of an offspring is determined by the genotype of its mother (as in snail coiling)?',
+  answers:['maternal effect','maternal effects','maternal influence'],
+  explain:'Maternal effect: the maternal parent\'s genotype (via substances deposited in the egg) determines the offspring\'s phenotype, delaying the appearance of Mendelian ratios.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'In the snail cross, in which generation does the classic 3 dextral : 1 sinistral ratio finally appear?',
+  options:['F₁','F₂','F₃','The parental generation'],
+  answer:2,
+  explain:'Only the F₃ generation segregates 3 dextral : 1 sinistral, confirming that shell coiling is a maternal effect.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'The "grandchildless" mutation in Drosophila shows that…',
+  options:[
+    'Offspring of a fertile homozygous female are all fully sterile, regardless of the male\'s genotype',
+    'All offspring die as embryos',
+    'Only males are affected',
+    'The mutation follows simple Mendelian inheritance'
+  ],
+  answer:0,
+  explain:'The gene is transmitted through the egg cytoplasm and prevents normal reproductive development — a detrimental developmental consequence of delayed gene action.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Sager et al. (1960) studied streptomycin resistance in which organism, showing a non-Mendelian pattern?',
+  options:['Chlamydomonas','Paramecium','Neurospora','Drosophila'],
+  answer:0,
+  explain:'In the single-celled green alga Chlamydomonas, as long as the mt⁺ parent is streptomycin resistant, no sensitive offspring appear — an extrachromosomal factor inherited through the mt⁺ type.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Sonneborn (1943) studied the "killer" trait in Paramecium aurelia. A killer must have…',
+  options:[
+    'Only the K gene',
+    'The K gene AND cytoplasmic particles called kappa',
+    'Only kappa particles',
+    'A chloroplast genome'
+  ],
+  answer:1,
+  explain:'The killer needs both the nuclear gene K and the cytoplasmic kappa particles. Genotype kk loses kappa even if it had it; once lost, kappa does not reappear unless reintroduced via cytoplasmic exchange during conjugation.'
+},
+{
+  topic:'cyt', type:'id',
+  q:'Which scientist (1909) discovered the non-Mendelian, maternal inheritance of leaf pigmentation in the four o\'clock plant, Mirabilis jalapa?',
+  answers:['correns','carl correns','erwin correns'],
+  explain:'Correns (1909) showed that pigmentation in Mirabilis jalapa is inherited only through the female parent — because chloroplasts travel through the egg cytoplasm, not the pollen.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'A plant cell that contains BOTH normal (green) and mutant (white) chloroplasts is said to show…',
+  options:['Heteroplasmy','Aneuploidy','Epistasis','Pleiotropy'],
+  answer:0,
+  explain:'Heteroplasmy is the presence of more than one type of organelle genome in a cell. A leaf containing both green and white chloroplasts can still appear green.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'In yeast, which petite mutant totally lacks the mitochondrial genome (rho⁰)?',
+  options:['Segregational (nuclear) petite','Neutral petite','Suppressive petite','Wild-type'],
+  answer:1,
+  explain:'Neutral petites (rho⁰) completely lack the mitochondrial genome. Suppressive petites (rho⁻) behave as a dominant trait. Segregational petites follow Mendelian inheritance.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'The human mitochondrial genome contains…',
+  options:[
+    '37 genes, 13 of which encode proteins',
+    '13 genes, all encoding proteins',
+    'About 20,000 genes',
+    'No genes — only ribosomes'
+  ],
+  answer:0,
+  explain:'Human mtDNA has 37 genes, 13 of which encode proteins. It is transmitted maternally through the egg cytoplasm, so mitochondrial diseases follow strict maternal inheritance.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Leber\'s Hereditary Optical Neuropathy (LHON) is caused by mutations in…',
+  options:[
+    'Several different mitochondrial genes affecting the optic nerves',
+    'A nuclear gene on chromosome 21',
+    'The kappa particles',
+    'Chloroplast DNA'
+  ],
+  answer:0,
+  explain:'LHON results from mutations in several mitochondrial genes affecting the optic nerves, causing progressive loss of vision in one or both eyes.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Cytoplasmic male sterility (CMS) is used in corn mainly to…',
+  options:[
+    'Increase the mutation rate',
+    'Eliminate the need for manual detasselling in hybrid seed production',
+    'Make the plants polyploid',
+    'Produce kappa particles'
+  ],
+  answer:1,
+  explain:'CMS lets breeders use a sterile female parent without manual detasselling, while a restorer (R) line serves as the male parent to produce fertile hybrid seed (heterosis / hybrid vigor).'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Which of the following is NOT one of the criteria suggesting extrachromosomal inheritance?',
+  options:[
+    'Difference in reciprocal cross results',
+    'Non-Mendelian segregation',
+    'Non-mappability with known nuclear genes',
+    'Strict Mendelian 3:1 ratios in every generation'
+  ],
+  answer:3,
+  explain:'Criteria include: differences in reciprocal crosses, maternal inheritance, non-mappability, non-Mendelian segregation, and indifference to nuclear substitution. Strict Mendelian ratios indicate the opposite — nuclear inheritance.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'In Drosophila, sigma particles cause CO₂ sensitivity. They require a nuclear gene, but their transmission is…',
+  options:['Paternal','Through the maternal line','Random','Through the Y chromosome'],
+  answer:1,
+  explain:'Sigma particles are an example of infective heredity: they require a nuclear gene, but transmission is through the maternal line.'
+},
+{
+  topic:'cyt', type:'mc',
+  q:'Episomes are best described as…',
+  options:[
+    'Chromosomal pigments found in moths',
+    'Genetic elements that can exist in the host chromosome or as independently replicating plasmids, and are infective',
+    'Particles that cause shell coiling in snails',
+    'Proteins that restructure chromatin'
+  ],
+  answer:1,
+  explain:'Episomes can be part of the host chromosomal DNA or exist as an independently replicating plasmid, and they are infective. The fertility factors of E. coli are an example.'
+}
+];
+
+/* =========================================================
+   TOPICS
+   ========================================================= */
+const TOPICS = [
+  {id:'all', name:'All Topics',             desc:'Mixed questions from all three lectures',           cls:''},
+  {id:'reg', name:'Gene Regulation',        desc:'Lecture 12 — genetic code, operons, epigenetics',    cls:''},
+  {id:'mut', name:'Mutations',              desc:'Lecture 13 — chromosomal & gene mutations',          cls:'mut'},
+  {id:'cyt', name:'Cytoplasmic Inheritance',desc:'Lecture 14 — maternal & extrachromosomal inheritance',cls:'cyt'}
+];
+
+/* =========================================================
+   STATE + HELPERS
+   ========================================================= */
+const state = {
+  topic: 'all',
+  pool: [],
+  i: 0,
+  score: 0,
+  answered: false,
+  results: []
+};
+
+const $ = id => document.getElementById(id);
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function normalize(s){
+  return String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')   // strip punctuation
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+/* Turn a raw question into a playable one (shuffled options) */
+function prepare(q){
+  if(q.type === 'mc'){
+    const opts = q.options.map((text,i)=>({text, correct: i === q.answer}));
+    shuffle(opts);
+    return { ...q, options: opts };
+  }
+  return { ...q };
+}
+
+/* =========================================================
+   START SCREEN
+   ========================================================= */
+function buildTopicList(){
+  const box = $('topicList');
+  box.innerHTML = '';
+  TOPICS.forEach(t => {
+    const count = t.id === 'all'
+      ? QUESTIONS.length
+      : QUESTIONS.filter(q => q.topic === t.id).length;
+
+    const el = document.createElement('div');
+    el.className = 'topic' + (t.id === state.topic ? ' selected' : '');
+    el.dataset.topic = t.id;
+    el.innerHTML = `
+      <div class="dot"></div>
+      <div class="meta">
+        <div class="name">${escapeHtml(t.name)}</div>
+        <div class="desc">${escapeHtml(t.desc)}</div>
+      </div>
+      <div class="count">${count} Qs</div>
+    `;
+    el.addEventListener('click', () => {
+      state.topic = t.id;
+      document.querySelectorAll('.topic').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+    box.appendChild(el);
+  });
+}
+
+/* =========================================================
+   QUIZ FLOW
+   ========================================================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function startQuiz(){
+  let pool = QUESTIONS.filter(q => state.topic === 'all' || q.topic === state.topic);
+  state.pool = shuffle(pool.slice()).map(prepare);
+  state.i = 0;
+  state.score = 0;
+  state.answered = false;
+  state.results = [];
+
+  $('scoreVal').textContent = '0';
+  showScreen('quizScreen');
+  renderQuestion();
+}
+
+function currentQ(){ return state.pool[state.i]; }
+
+function topicLabel(t){
+  return t === 'reg' ? 'Gene Regulation' : t === 'mut' ? 'Mutations' : 'Cytoplasmic Inheritance';
+}
+
+function renderQuestion(){
+  const q = currentQ();
+  state.answered = false;
+
+  // header
+  const badge = $('topicBadge');
+  badge.textContent = topicLabel(q.topic);
+  badge.className = 'badge ' + (q.topic === 'mut' ? 'mut' : q.topic === 'cyt' ? 'cyt' : '');
+
+  $('counter').textContent = `Question ${state.i + 1} of ${state.pool.length}`;
+  $('bar').style.width = ((state.i) / state.pool.length * 100) + '%';
+
+  // body
+  $('qType').textContent = q.type === 'mc' ? 'Multiple Choice' : 'Identification';
+  $('qText').textContent = q.q;
+  $('feedback').innerHTML = '';
+  $('nextBtn').style.display = 'none';
+
+  const optBox  = $('optionsBox');
+  const idBox   = $('idBox');
+  const idHint  = $('idHint');
+  optBox.innerHTML = '';
+
+  if(q.type === 'mc'){
+    optBox.style.display = 'grid';
+    idBox.style.display = 'none';
+    idHint.style.display = 'none';
+
+    const letters = ['A','B','C','D','E'];
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerHTML = `<span class="letter">${letters[idx]}</span><span>${escapeHtml(opt.text)}</span>`;
+      btn.addEventListener('click', () => answerMC(idx));
+      optBox.appendChild(btn);
+    });
+  } else {
+    optBox.style.display = 'none';
+    idBox.style.display = 'flex';
+    idHint.style.display = 'block';
+
+    const input = $('idInput');
+    input.value = '';
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+/* ---------- multiple choice ---------- */
+function answerMC(idx){
+  if(state.answered) return;
+  state.answered = true;
+
+  const q = currentQ();
+  const buttons = [...document.querySelectorAll('.option')];
+
+  buttons.forEach((b,i)=>{
+    b.disabled = true;
+    if(q.options[i].correct) b.classList.add('correct');
+  });
+
+  const chosen = q.options[idx];
+  if(!chosen.correct) buttons[idx].classList.add('wrong');
+
+  const correctText = q.options.find(o=>o.correct).text;
+
+  recordResult(chosen.correct, chosen.text, correctText, q.explain);
+  finishQuestion(chosen.correct);
+}
+
+/* ---------- identification ---------- */
+function answerID(){
+  if(state.answered) return;
+
+  const q = currentQ();
+  const raw = $('idInput').value;
+  const userNorm = normalize(raw);
+
+  if(userNorm === ''){
+    // treat empty as "show me the answer" (counts as incorrect)
+  }
+
+  const isCorrect = userNorm !== '' &&
+    q.answers.some(a => normalize(a) === userNorm);
+
+  state.answered = true;
+  $('idInput').disabled = true;
+  $('submitId').disabled = true;
+
+  recordResult(isCorrect, raw.trim() || '(skipped)', q.answers[0], q.explain);
+  finishQuestion(isCorrect);
+}
+
+/* ---------- shared feedback ---------- */
+function recordResult(correct, userAnswer, correctAnswer, explain){
+  const q = currentQ();
+  state.results.push({
+    q: q.q,
+    userAnswer,
+    correctAnswer,
+    explain,
+    correct,
+    topic: q.topic
+  });
+  if(correct) state.score++;
+  $('scoreVal').textContent = state.score;
+}
+
+function finishQuestion(correct){
+  const q = currentQ();
+  const fb = $('feedback');
+  fb.className = 'feedback ' + (correct ? 'good' : 'bad');
+
+  let ansLine = '';
+  if(q.type === 'id' || !correct){
+    ansLine = `<div class="ansline">Correct answer: <strong>${escapeHtml(q.answers ? q.answers[0] : q.options.find(o=>o.correct).text)}</strong></div>`;
+  }
+
+  fb.innerHTML = `
+    <span class="verdict">${correct ? '✅ Correct!' : '❌ Not quite.'}</span>
+    ${ansLine}
+    <div class="exp">${escapeHtml(q.explain)}</div>
+  `;
+
+  const next = $('nextBtn');
+  next.style.display = 'inline-block';
+  next.textContent = (state.i === state.pool.length - 1) ? 'See Results →' : 'Next →';
+  next.focus();
+}
+
+function nextQuestion(){
+  if(!state.answered) return;
+
+  if(state.i === state.pool.length - 1){
+    showResults();
+    return;
+  }
+
+  state.i++;
+  $('submitId').disabled = false; // reset for next ID question
+  renderQuestion();
+}
+
+/* =========================================================
+   RESULTS
+   ========================================================= */
+function showResults(){
+  const total = state.pool.length;
+  const score = state.score;
+  const pct = Math.round(score / total * 100);
+
+  // ring
+  const ring = $('ring');
+  const deg = pct * 3.6;
+  ring.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(148,163,184,.15) ${deg}deg)`;
+  $('pctText').textContent = pct + '%';
+  $('fracText').textContent = `${score} / ${total}`;
+
+  // message
+  let title, sub;
+  if(pct >= 90){ title = 'Outstanding! 🏆'; sub = 'You clearly own these three lectures. Ready for the exam.'; }
+  else if(pct >= 75){ title = 'Great job! 🎉'; sub = 'Strong grasp of the material — just polish a few details.'; }
+  else if(pct >= 60){ title = 'Not bad! 👍'; sub = 'Solid foundation. Review the explanations below and run it again.'; }
+  else if(pct >= 40){ title = 'Keep going 💪'; sub = 'You have the basics — a reread of the slides will help a lot.'; }
+  else { title = 'Time for a reread 📖'; sub = 'Go back through the lectures, then come back and try again.'; }
+  $('resTitle').textContent = title;
+  $('resSub').textContent = sub;
+
+  // review
+  const box = $('reviewBox');
+  box.innerHTML = '';
+  state.results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'rev-item ' + (r.correct ? 'ok' : 'no');
+    div.innerHTML = `
+      <div class="rev-q"><span class="num">${i + 1}.</span><span>${escapeHtml(r.q)}</span></div>
+      <div class="rev-line ${r.correct ? 'good' : 'bad'}">Your answer: <strong>${escapeHtml(r.userAnswer)}</strong></div>
+      ${r.correct ? '' : `<div class="rev-line good">Correct answer: <strong>${escapeHtml(r.correctAnswer)}</strong></div>`}
+      <div class="rev-exp">${escapeHtml(r.explain)}</div>
+    `;
+    box.appendChild(div);
+  });
+
+  showScreen('resultScreen');
+}
+
+/* =========================================================
+   EVENT WIRING
+   ========================================================= */
+$('startBtn').addEventListener('click', startQuiz);
+$('nextBtn').addEventListener('click', nextQuestion);
+$('submitId').addEventListener('click', answerID);
+$('retryBtn').addEventListener('click', startQuiz);
+$('homeBtn').addEventListener('click', () => { showScreen('startScreen'); });
+
+// Enter key support
+$('idInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); answerID(); }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && $('quizScreen').classList.contains('active') && state.answered){
+    e.preventDefault();
+    nextQuestion();
+  }
+});
+
+// boot
+buildTopicList();
+</script>
+</body>
+</html>
