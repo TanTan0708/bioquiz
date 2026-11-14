@@ -8,6 +8,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Set a timeout so Vercel doesn't kill the function silently
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 50000); // 50 seconds max
+
   const { topic, difficulty, count, materialFile } = req.body;
 
   let materialContent = '';
@@ -20,9 +24,10 @@ export default async function handler(req, res) {
         if (materialFile.toLowerCase().endsWith('.pdf')) {
           const dataBuffer = fs.readFileSync(filePath);
           const parser = new PDFParse({ data: dataBuffer });
+          
           try {
             const textResult = await parser.getText();
-            materialContent = textResult.text;
+            materialContent = textResult.text || '';
           } catch (e) { console.log("Text extraction failed", e); }
           
           try {
@@ -32,7 +37,7 @@ export default async function handler(req, res) {
               for (const page of imageResult.pages) {
                 if (page.images) {
                   for (const img of page.images) {
-                    if (imageCount >= 5) break; // Limit to 5 images
+                    if (imageCount >= 4) break; // Strict limit to prevent token overflow
                     const base64Data = img.data.toString('base64');
                     imagesPayload.push({
                       type: 'image_url',
@@ -78,7 +83,8 @@ Rules:
 - Every question must have a short explanation.`;
 
     if (materialContent) {
-      prompt = `Read the following text material:\n---\n${materialContent.substring(0, 30000)}\n---\n\n${prompt}`;
+      // Truncate aggressively to prevent crashing the AI
+      prompt = `Read the following text material:\n---\n${materialContent.substring(0, 25000)}\n---\n\n${prompt}`;
     }
   } else {
     prompt = `You are a genetics professor. Generate EXACTLY ${count} multiple-choice questions about ${topicLabels[topic] || topicLabels.all}.
@@ -102,6 +108,7 @@ Rules:
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
@@ -109,28 +116,30 @@ Rules:
         'X-Title': 'Genetics Quiz'
       },
       body: JSON.stringify({
-        model: 'nvidia/nemotron-3.5-super-vl:free', // Switched to a more reliable model
+        // 🚀 SWITCHED TO GEMINI: The most reliable free model for JSON + Vision
+        model: 'google/gemini-2.0-flash-lite-preview-02-05:free', 
         messages: [{ role: 'user', content: contentPayload }],
-        temperature: 0.7,
-        max_tokens: 8192,
+        temperature: 0.3, // Lower temperature = stricter adherence to JSON
+        max_tokens: 4096,
       })
     });
 
+    clearTimeout(timeout);
+
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`OpenRouter API Error: ${response.status} - ${errText}`);
+      throw new Error(`OpenRouter API Error: ${response.status} - ${errText.substring(0, 100)}`);
     }
 
     const data = await response.json();
     let raw = data.choices[0].message.content;
     if (!raw) throw new Error("The AI model returned an empty response.");
 
-    // Enhanced JSON extraction to handle markdown or conversational text
+    // Safe JSON extraction
     const startIdx = raw.indexOf('{');
     const endIdx = raw.lastIndexOf('}');
     
     if (startIdx === -1 || endIdx === -1) {
-      // Log the raw output to help debug the exact model behavior
       console.error("RAW OUTPUT:", raw.substring(0, 500));
       throw new Error("The AI failed to return a valid JSON object.");
     }
@@ -145,7 +154,8 @@ Rules:
 
     res.status(200).json({ questions });
   } catch (err) {
-    console.error(err);
+    clearTimeout(timeout);
+    console.error("Backend Error:", err);
     res.status(500).json({ error: err.message });
   }
 }

@@ -462,6 +462,12 @@ async function getQuestions(topic, difficulty, count){
             materialFile: isMaterial ? topic : null
           })
         });
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Server timed out or crashed. The PDF might be too large. Check Vercel logs.");
+        }
+
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         
@@ -486,14 +492,14 @@ async function getQuestions(topic, difficulty, count){
       } catch (err) {
         console.error("LLM Generation failed:", err);
         alert("Could not generate extra questions:\n\n" + err.message + "\n\nPlaying with only the built-in questions.");
-          // SAFETY NET: If the pool is empty, throw an error so the UI handles it gracefully
-        if (finalPool.length === 0) {
-          throw new Error("Failed to generate questions. Please try again or choose a different topic.");
-        }
 
         return shuffle(finalPool); 
       }
     }
+  }
+
+  if (finalPool.length === 0) {
+    throw new Error("Failed to generate questions. Please try again.");
   }
 
   return shuffle(finalPool); 
