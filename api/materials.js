@@ -9,8 +9,11 @@ export default function handler(req, res) {
       return res.status(200).json({ topics: [] });
     }
     
-    // Cycle through the folder and get all .md files
-    const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+    // Accept .md, .txt, AND .pdf
+    const files = fs.readdirSync(dir).filter(f => 
+      f.endsWith('.md') || f.endsWith('.txt') || f.endsWith('.pdf')
+    );
+    
     res.status(200).json({ topics: files });
   } catch (err) {
     res.status(500).json({ error: err.message });

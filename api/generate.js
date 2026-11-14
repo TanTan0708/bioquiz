@@ -1,6 +1,7 @@
 // api/generate.js
 import fs from 'fs';
 import path from 'path';
+import pdf from 'pdf-parse';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,7 +15,15 @@ export default async function handler(req, res) {
     try {
       const filePath = path.join(process.cwd(), 'Materials', materialFile);
       if (fs.existsSync(filePath)) {
-        materialContent = fs.readFileSync(filePath, 'utf8');
+        if (materialFile.toLowerCase().endsWith('.pdf')) {
+          // Read and parse PDF
+          const dataBuffer = fs.readFileSync(filePath);
+          const pdfData = await pdf(dataBuffer);
+          materialContent = pdfData.text;
+        } else {
+          // Read .md or .txt
+          materialContent = fs.readFileSync(filePath, 'utf8');
+        }
       }
     } catch (e) {
       console.error("Could not read material file", e);
@@ -41,9 +50,13 @@ Rules:
 - Every question must have a short explanation.`;
 
   if (materialContent) {
+    // We truncate the text to roughly 40,000 characters (approx 10,000 tokens) 
+    // to prevent the AI from crashing due to context limits.
+    const safeText = materialContent.substring(0, 40000); 
+
     prompt = `You are a genetics professor. Read the following study material carefully.
 --- MATERIAL START ---
-${materialContent.substring(0, 50000)} // Truncating to avoid token limits
+${safeText}
 --- MATERIAL END ---
 
 Generate EXACTLY ${count} multiple-choice questions based ONLY on this material. 
