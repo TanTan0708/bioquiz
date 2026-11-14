@@ -1,3 +1,4 @@
+// api/generate.js
 import fs from 'fs';
 import path from 'path';
 import { PDFParse } from 'pdf-parse';
@@ -19,7 +20,6 @@ export default async function handler(req, res) {
         if (materialFile.toLowerCase().endsWith('.pdf')) {
           const dataBuffer = fs.readFileSync(filePath);
           const parser = new PDFParse({ data: dataBuffer });
-          
           try {
             const textResult = await parser.getText();
             materialContent = textResult.text;
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
               for (const page of imageResult.pages) {
                 if (page.images) {
                   for (const img of page.images) {
-                    if (imageCount >= 5) break; // Limit to 5 images to save tokens
+                    if (imageCount >= 5) break; // Limit to 5 images
                     const base64Data = img.data.toString('base64');
                     imagesPayload.push({
                       type: 'image_url',
@@ -109,11 +109,10 @@ Rules:
         'X-Title': 'Genetics Quiz'
       },
       body: JSON.stringify({
-        model: 'inclusionai/ling-3.2-flash:free', 
+        model: 'nvidia/nemotron-3.5-super-vl:free', // Switched to a more reliable model
         messages: [{ role: 'user', content: contentPayload }],
         temperature: 0.7,
         max_tokens: 8192,
-        // Removed response_format to prevent the model from crashing if it doesn't support it
       })
     });
 
@@ -126,13 +125,14 @@ Rules:
     let raw = data.choices[0].message.content;
     if (!raw) throw new Error("The AI model returned an empty response.");
 
-    // BULLETPROOF JSON EXTRACTION:
-    // Finds the first { and the last } to strip out any conversational text
+    // Enhanced JSON extraction to handle markdown or conversational text
     const startIdx = raw.indexOf('{');
     const endIdx = raw.lastIndexOf('}');
     
     if (startIdx === -1 || endIdx === -1) {
-      throw new Error("The AI failed to return a valid JSON object. Raw output: " + raw.substring(0, 100));
+      // Log the raw output to help debug the exact model behavior
+      console.error("RAW OUTPUT:", raw.substring(0, 500));
+      throw new Error("The AI failed to return a valid JSON object.");
     }
     
     const jsonStr = raw.substring(startIdx, endIdx + 1);
