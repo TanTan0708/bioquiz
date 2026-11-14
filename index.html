@@ -465,6 +465,7 @@ async function getQuestions(topic, difficulty, count){
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         
+        // Find this inside getQuestions in index.html:
         if (data.questions && Array.isArray(data.questions)) {
           const apiQs = data.questions.map(q => {
             const opts = q.options.map((text, i) => ({ text, correct: i === q.answer }));
@@ -474,10 +475,13 @@ async function getQuestions(topic, difficulty, count){
               q: q.question,
               options: opts,
               explain: q.explanation,
-              topic: isMaterial ? topic : (topic === 'all' ? 'reg' : topic)
+              topic: isMaterial ? topic : (topic === 'all' ? 'reg' : topic),
+              // If it's a material, we can tag it so the frontend knows to look for images
+              materialBase: isMaterial ? topic.replace(/\.(pdf|md|txt)$/i, '') : null
             };
           });
           finalPool = finalPool.concat(apiQs);
+        
         }
       } catch (err) {
         console.error("LLM Generation failed:", err);
@@ -680,13 +684,22 @@ function showResults(){
 
   const box = $('reviewBox');
   box.innerHTML = '';
-  state.results.forEach((r, i) => {
+    state.results.forEach((r, i) => {
     const div = document.createElement('div');
     div.className = 'rev-item ' + (r.correct ? 'ok' : 'no');
     
-    // Render table and image in the review
     const tableHtml = r.table ? `<div class="rev-table-wrap">${r.table}</div>` : '';
-    const imgHtml = r.img ? `<img src="${r.img}" alt="Reference Image" class="rev-img" onerror="this.style.display='none'">` : '';
+    
+    // --- NEW CODE FOR IMAGES ---
+    let imgHtml = '';
+    if (r.img) {
+      // Hardcoded image (from our 59 questions)
+      imgHtml = `<img src="${r.img}" class="rev-img" onerror="this.style.display='none'">`;
+    } else if (r.materialBase) {
+      // Dynamic material image (e.g., Materials/Lesson1.png)
+      imgHtml = `<img src="Materials/${r.materialBase}.png" class="rev-img" onerror="this.style.display='none'">`;
+    }
+    // ---------------------------
 
     div.innerHTML = `
       <div class="rev-q"><span class="num">${i + 1}.</span><span>${escapeHtml(r.q)}</span></div>

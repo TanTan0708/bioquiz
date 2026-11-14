@@ -11,33 +11,54 @@ export default async function handler(req, res) {
   const { topic, difficulty, count, materialFile } = req.body;
 
   let materialContent = '';
+  let imagesPayload = [];
+
   if (materialFile) {
     try {
-      const filePath = path.join(process.cwd(), 'Materials', materialFile);
+      const dir = path.join(process.cwd(), 'Materials');
+      const filePath = path.join(dir, materialFile);
+      
+      // 1. Read the text (PDF or MD)
       if (fs.existsSync(filePath)) {
         if (materialFile.toLowerCase().endsWith('.pdf')) {
-          // Read and parse PDF
           const dataBuffer = fs.readFileSync(filePath);
           const pdfData = await pdf(dataBuffer);
           materialContent = pdfData.text;
         } else {
-          // Read .md or .txt
           materialContent = fs.readFileSync(filePath, 'utf8');
         }
       }
+
+      // 2. Find associated images (e.g., Lesson1.png, Lesson1-1.png)
+      const baseName = materialFile.replace(/\.(pdf|md|txt)$/i, '');
+      const files = fs.readdirSync(dir);
+      
+      const imageFiles = files.filter(f => {
+        const ext = path.extname(f).toLowerCase();
+        return ['.png', '.jpg', '.jpeg'].includes(ext) && f.startsWith(baseName);
+      });
+
+      // 3. Convert images to Base64 format for the AI
+      for (const img of imageFiles) {
+        const imgPath = path.join(dir, img);
+        const ext = path.extname(img).toLowerCase();
+        const mime = ext === '.png' ? 'image/png' : 'image/jpeg';
+        const base64 = fs.readFileSync(imgPath).toString('base64');
+        
+        imagesPayload.push({
+          type: 'image_url',
+          image_url: { url: `data:${mime};base64,${base64}` }
+        });
+      }
+
     } catch (e) {
-      console.error("Could not read material file", e);
+      console.error("Could not read material files:", e);
     }
   }
 
-  const topicLabels = {
-    all: 'gene regulation, mutations, and cytoplasmic inheritance (lectures 12-14)',
-    reg: 'gene regulation, the genetic code, operons, and epigenetics (lecture 12)',
-    mut: 'chromosomal mutations and gene/point mutations (lecture 13)',
-    cyt: 'cytoplasmic inheritance — maternal effects, extrachromosomal inheritance, organelles (lecture 14)'
-  };
+  let prompt = `You are a genetics professor. Generate EXACTLY ${count} multiple-choice questions based on the provided material.
+If there are images provided, analyze them closely (especially tables, diagrams, or charts) and generate questions based on the data inside them as well as the text.
 
-  let prompt = `You are a genetics professor. Generate EXACTLY ${count} multiple-choice questions about ${topicLabels[topic] || topic}.
 Difficulty: ${difficulty}.
 
 Return ONLY a valid JSON object. Do not include markdown formatting or backticks.
@@ -50,27 +71,13 @@ Rules:
 - Every question must have a short explanation.`;
 
   if (materialContent) {
-    // We truncate the text to roughly 40,000 characters (approx 10,000 tokens) 
-    // to prevent the AI from crashing due to context limits.
-    const safeText = materialContent.substring(0, 40000); 
+    prompt = `Read the following text material:\n---\n${materialContent.substring(0, 40000)}\n---\n\n${prompt}`;
+  }
 
-    prompt = `You are a genetics professor. Read the following study material carefully.
---- MATERIAL START ---
-${safeText}
---- MATERIAL END ---
-
-Generate EXACTLY ${count} multiple-choice questions based ONLY on this material. 
-Difficulty: ${difficulty}.
-
-Return ONLY a valid JSON object. Do not include markdown formatting or backticks.
-Schema:
-{"questions":[{"question":"...","options":["A","B","C","D"],"answer":0,"explanation":"..."}]}
-
-Rules:
-- "answer" is the index (0-3) of the correct option.
-- 4 options per question.
-- Every question must have a short explanation.
-- Include questions about specific scientists, examples, and data/tables mentioned in the text.`;
+  // Construct the message payload
+  const contentPayload = [{ type: 'text', text: prompt }];
+  if (imagesPayload.length > 0) {
+    contentPayload.push(...imagesPayload);
   }
 
   try {
@@ -83,21 +90,21 @@ Rules:
         'X-Title': 'Genetics Quiz'
       },
       body: JSON.stringify({
-        model: 'baidu/ernie-5.5-flash-preview:free',
-        messages: [{ role: 'user', content: prompt }],
+        // ⚠️ MUST BE A VISION MODEL
+        model: 'inclusionai/ling-3.2-flash:free', 
+        messages: [{ role: 'user', content: contentPayload }],
         temperature: 0.7,
         max_tokens: 8192,
         response_format: { type: 'json_object' }
       })
     });
 
-    if (!response.ok) throw new Error(`OpenRouter API Error ${response.status}`);
-
-    const data = await response.json();
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error("Invalid response structure from OpenRouter.");
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter API Error: ${errText}`);
     }
 
+    const data = await response.json();
     const raw = data.choices[0].message.content;
     if (!raw) throw new Error("The AI model returned an empty response.");
 
