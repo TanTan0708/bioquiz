@@ -486,7 +486,12 @@ async function getQuestions(topic, difficulty, count){
       } catch (err) {
         console.error("LLM Generation failed:", err);
         alert("Could not generate extra questions:\n\n" + err.message + "\n\nPlaying with only the built-in questions.");
-        return shuffle(finalPool);
+          // SAFETY NET: If the pool is empty, throw an error so the UI handles it gracefully
+        if (finalPool.length === 0) {
+          throw new Error("Failed to generate questions. Please try again or choose a different topic.");
+        }
+
+        return shuffle(finalPool); 
       }
     }
   }
